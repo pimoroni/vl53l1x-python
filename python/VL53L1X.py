@@ -109,9 +109,7 @@ class VL53L1X:
     def open(self):
         self._i2c.open(bus=self._i2c_bus)
         self._configure_i2c_library_functions()
-        print("Configured i2c library functions")
         self._dev = _TOF_LIBRARY.initialise(self.i2c_address)
-        print("Initialized C")
 
     def close(self):
         self._i2c.close()
@@ -123,10 +121,16 @@ class VL53L1X:
             ret_val = 0
             result = []
 
+            print("Read {} bytes from {}.".format(length, reg))
+
             try:
-                result = self._i2c.read_i2c_block_data(address, reg, length)
+                for i in range(0, length, 32):
+                    read_length = min(length - i, 32)
+                    result += self._i2c.read_i2c_block_data(address, reg + i, read_length)
             except IOError:
                 ret_val = -1
+
+            print(result)
 
             if ret_val == 0:
                 for index in range(length):
@@ -139,10 +143,14 @@ class VL53L1X:
             ret_val = 0
             data = []
 
+            print("Write {} bytes to {}.".format(length, reg))
+
             for index in range(length):
                 data.append(data_p[index])
+            print(data)
             try:
-                self._i2c.write_i2c_block_data(address, reg, data)
+                for i in range(0, len(data), 32):
+                    self._i2c.write_i2c_block_data(address, reg + i, data[i:i+32])
             except IOError:
                 ret_val = -1
 

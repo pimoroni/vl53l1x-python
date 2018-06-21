@@ -33,6 +33,9 @@ SOFTWARE.
 #include "vl53l1_api.h"
 #include "vl53l1_platform.h"
 
+static VL53L1_RangingMeasurementData_t RangingMeasurementData;
+static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasurementData;
+
 VL53L1_Error WaitMeasurementDataReady(VL53L1_Dev_t *dev)
 {
     return VL53L1_ERROR_NONE;
@@ -74,6 +77,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
     Status = VL53L1_WaitDeviceBooted(dev);
     printf("DataInit\n");
     Status = VL53L1_DataInit(dev);
+    Status = VL53L1_StaticInit(dev);
     printf("Status: %d\n", Status);
     //if(Status == VL53L1_ERROR_NONE){
         printf("GetDeviceInfo\n");
@@ -114,7 +118,12 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
  *****************************************************************************/
 VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
 {
-    return VL53L1_ERROR_NONE;
+    VL53L1_Error Status = VL53L1_ERROR_NONE;
+    Status = VL53L1_SetDistanceMode(dev, VL53L1_DISTANCEMODE_LONG);
+    Status = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 66000);
+    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 50);
+    Status = VL53L1_StartMeasurement(dev);
+    return Status;
 }
 
 /******************************************************************************
@@ -123,7 +132,14 @@ VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
  *****************************************************************************/
 int32_t getDistance(VL53L1_Dev_t *dev)
 {
-    return 0;
+    VL53L1_Error Status = VL53L1_ERROR_NONE;
+    int32_t current_distance = -1;
+    Status = VL53L1_WaitMeasurementDataReady(dev);
+    Status = VL53L1_GetRangingMeasurementData(dev, pRangingMeasurementData);
+    printf("Range Status: %d, Command Status: %d\n", pRangingMeasurementData->RangeStatus, Status);
+    current_distance = pRangingMeasurementData->RangeMilliMeter;
+    VL53L1_ClearInterruptAndStartMeasurement(dev);
+    return current_distance;
 }
 
 /******************************************************************************
@@ -131,5 +147,5 @@ int32_t getDistance(VL53L1_Dev_t *dev)
  *****************************************************************************/
 void stopRanging(VL53L1_Dev_t *dev)
 {
-    return;
+    return VL53L1_StopMeasurement(dev);
 }
