@@ -22,56 +22,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_uint8, c_uint32
-import pkg_resources
-SMBUS='smbus'
-for dist in pkg_resources.working_set:
-    #print(dist.project_name, dist.version)
-    if dist.project_name == 'smbus':
-        break
-    if dist.project_name == 'smbus2':
-        SMBUS='smbus2'
-        break
-if SMBUS == 'smbus':
-    import smbus
-elif SMBUS == 'smbus2':
-    import smbus2 as smbus
+from smbus2 import SMBus, i2c_msg
 import site
 
-
-class Vl53l0xError(RuntimeError):
+class VL53L1xError(RuntimeError):
     pass
 
-
-class Vl53l0xAccuracyMode:
-    GOOD = 0        # 33 ms timing budget 1.2m range
-    BETTER = 1      # 66 ms timing budget 1.2m range
-    BEST = 2        # 200 ms 1.2m range
-    LONG_RANGE = 3  # 33 ms timing budget 2m range
-    HIGH_SPEED = 4  # 20 ms timing budget 1.2m range
-
-
-class Vl53l0xDeviceMode:
-    SINGLE_RANGING = 0
-    CONTINUOUS_RANGING = 1
-    SINGLE_HISTOGRAM = 2
-    CONTINUOUS_TIMED_RANGING = 3
-    SINGLE_ALS = 10
-    GPIO_DRIVE = 20
-    GPIO_OSC = 21
-
-
-class Vl53l0xGpioAlarmType:
-    OFF = 0
-    THRESHOLD_CROSSED_LOW = 1
-    THRESHOLD_CROSSED_HIGH = 2
-    THRESHOLD_CROSSED_OUT = 3
-    NEW_MEASUREMENT_READY = 4
-
-
-class Vl53l0xInterruptPolarity:
-    LOW = 0
-    HIGH = 1
-
+class VL53L1xDistanceMode:
+    SHORT = 1
+    MEDIUM = 2
+    LONG = 3
 
 # Read/write function pointer types.
 _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
@@ -97,7 +57,7 @@ class VL53L1X:
         self.i2c_address = i2c_address
         self._tca9548a_num = tca9548a_num
         self._tca9548a_addr = tca9548a_addr
-        self._i2c = smbus.SMBus()
+        self._i2c = SMBus(1)
         self._dev = None
         # Resgiter Address
         self.ADDR_UNIT_ID_HIGH = 0x16 # Serial number high byte
@@ -119,22 +79,15 @@ class VL53L1X:
         # I2C bus read callback for low level library.
         def _i2c_read(address, reg, data_p, length):
             ret_val = 0
-            result = []
 
-            print("Read {} bytes from {}.".format(length, reg))
+            msg_w = i2c_msg.write(address, [reg >> 8, reg & 0xff])
+            msg_r = i2c_msg.read(address, length)
 
-            try:
-                for i in range(0, length, 32):
-                    read_length = min(length - i, 32)
-                    result += self._i2c.read_i2c_block_data(address, reg + i, read_length)
-            except IOError:
-                ret_val = -1
-
-            print(result)
+            self._i2c.i2c_rdwr(msg_w, msg_r)
 
             if ret_val == 0:
                 for index in range(length):
-                    data_p[index] = result[index]
+                    data_p[index] = ord(msg_r.buf[index])
 
             return ret_val
 
@@ -143,16 +96,12 @@ class VL53L1X:
             ret_val = 0
             data = []
 
-            print("Write {} bytes to {}.".format(length, reg))
-
             for index in range(length):
                 data.append(data_p[index])
-            print(data)
-            try:
-                for i in range(0, len(data), 32):
-                    self._i2c.write_i2c_block_data(address, reg + i, data[i:i+32])
-            except IOError:
-                ret_val = -1
+
+            msg_w = i2c_msg.write(address, [reg >> 8, reg & 0xff] + data)
+
+            self._i2c.i2c_rdwr(msg_w)
 
             return ret_val
 
@@ -161,7 +110,7 @@ class VL53L1X:
         self._i2c_write_func = _I2C_WRITE_FUNC(_i2c_write)
         _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_read_func, self._i2c_write_func)
 
-    def start_ranging(self, mode=Vl53l0xAccuracyMode.GOOD):
+    def start_ranging(self, mode=VL53L1xDistanceMode.LONG):
         """Start VL53L1X ToF Sensor Ranging"""
         _TOF_LIBRARY.startRanging(self._dev, mode)
 
@@ -184,57 +133,5 @@ class VL53L1X:
         else:
             return 0
 
-    def configure_gpio_interrupt(
-            self, proximity_alarm_type=Vl53l0xGpioAlarmType.THRESHOLD_CROSSED_LOW,
-            interrupt_polarity=Vl53l0xInterruptPolarity.HIGH, threshold_low_mm=250, threshold_high_mm=500):
-        """
-        Configures a GPIO interrupt from device, be sure to call "clear_interrupt" after interrupt is processed.
-        """
-        pin = c_uint8(0)  # 0 is only GPIO pin.
-        device_mode = c_uint8(Vl53l0xDeviceMode.CONTINUOUS_RANGING)
-        functionality = c_uint8(proximity_alarm_type)
-        polarity = c_uint8(interrupt_polarity)
-        status = _TOF_LIBRARY.VL53L1X_SetGpioConfig(self._dev, pin, device_mode, functionality, polarity)
-        if status != 0:
-            raise Vl53l0xError('Error setting VL53L1X GPIO config')
-
-        threshold_low = c_uint32(threshold_low_mm << 16)
-        threshold_high = c_uint32(threshold_high_mm << 16)
-        status = _TOF_LIBRARY.VL53L1X_SetInterruptThresholds(self._dev, device_mode, threshold_low, threshold_high)
-        if status != 0:
-            raise Vl53l0xError('Error setting VL53L1X thresholds')
-
-        # Ensure any pending interrupts are cleared.
-        self.clear_interrupt()
-
-    def clear_interrupt(self):
-        mask = c_uint32(0)
-        status = _TOF_LIBRARY.VL53L1X_ClearInterruptMask(self._dev, mask)
-        if status != 0:
-            raise Vl53l0xError('Error clearing VL53L1X interrupt')
-
     def change_address(self, new_address):
-        if self._dev is not None:
-            raise Vl53l0xError('Error changing VL53L1X address')
-
-        self._i2c.open(bus=self._i2c_bus)
-
-        if new_address == None:
-            return
-        elif new_address == self.i2c_address:
-            return
-        else:
-            # read value from 0x16,0x17
-            high = self._i2c.read_byte_data(self.i2c_address, self.ADDR_UNIT_ID_HIGH)
-            low = self._i2c.read_byte_data(self.i2c_address, self.ADDR_UNIT_ID_LOW)
-
-            # write value to 0x18,0x19
-            self._i2c.write_byte_data(self.i2c_address, self.ADDR_I2C_ID_HIGH, high)
-            self._i2c.write_byte_data(self.i2c_address, self.ADDR_I2C_ID_LOW, low)
-
-            # write new_address to 0x1a
-            self._i2c.write_byte_data(self.i2c_address, self.ADDR_I2C_SEC_ADDR, new_address)
-
-            self.i2c_address = new_address
-
-        self._i2c.close()
+        _TOF_LIBRARY.setDeviceAddress(self._dev, new_address)

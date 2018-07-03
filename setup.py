@@ -21,8 +21,8 @@ extension = Extension(
              'python_lib/vl53l1x_python.c'])
 
 setup(name='vl53l1x',
-      version='1.0.4',
-      description='vl53l1x sensor for raspberry PI/JetsonTX2',
+      version='0.0.1',
+      description='vl53l1x distance sensor driver for Raspberry Pi',
       # author='?',
       # author_email='?',
       url='https://github.com/pimoroni/vl53l1x-python',
@@ -32,4 +32,4 @@ vl53l1x sensor for Raspberry Pi.
       ext_modules=[extension],
       package_dir={'': 'python'},
       py_modules=['VL53L1X'],
-      requires=['smbus' or 'smbus2'])
+      requires=['smbus2'])

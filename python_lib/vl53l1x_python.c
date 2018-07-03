@@ -71,16 +71,11 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
     memset(dev, 0, sizeof(VL53L1_Dev_t));
 
     dev->I2cDevAddr = i2c_address;
-    printf("software_reset\n");
     Status = VL53L1_software_reset(dev);
-    printf("WaitDeviceBooted\n");
     Status = VL53L1_WaitDeviceBooted(dev);
-    printf("DataInit\n");
     Status = VL53L1_DataInit(dev);
     Status = VL53L1_StaticInit(dev);
-    printf("Status: %d\n", Status);
     //if(Status == VL53L1_ERROR_NONE){
-        printf("GetDeviceInfo\n");
         Status = VL53L1_GetDeviceInfo(dev, &DeviceInfo);
         if(Status == VL53L1_ERROR_NONE){
             printf("VL53L0X_GetDeviceInfo:\n");
@@ -93,6 +88,14 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
     //}
 
     return dev;
+}
+
+VL53L1_Error setDeviceAddress(VL53L1_Dev_t *dev, int i2c_address)
+{
+    printf("Set addr: %x", i2c_address);
+    VL53L1_Error Status = VL53L1_SetDeviceAddress(dev, i2c_address << 1);
+    dev->I2cDevAddr = i2c_address;
+    return Status;
 }
 
 /******************************************************************************
@@ -119,9 +122,9 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
 VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
-    Status = VL53L1_SetDistanceMode(dev, VL53L1_DISTANCEMODE_LONG);
+    Status = VL53L1_SetDistanceMode(dev, mode);
     Status = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 66000);
-    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 50);
+    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 10);
     Status = VL53L1_StartMeasurement(dev);
     return Status;
 }
@@ -136,7 +139,6 @@ int32_t getDistance(VL53L1_Dev_t *dev)
     int32_t current_distance = -1;
     Status = VL53L1_WaitMeasurementDataReady(dev);
     Status = VL53L1_GetRangingMeasurementData(dev, pRangingMeasurementData);
-    printf("Range Status: %d, Command Status: %d\n", pRangingMeasurementData->RangeStatus, Status);
     current_distance = pRangingMeasurementData->RangeMilliMeter;
     VL53L1_ClearInterruptAndStartMeasurement(dev);
     return current_distance;
