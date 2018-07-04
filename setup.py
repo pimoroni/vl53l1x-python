@@ -20,7 +20,7 @@ extension = Extension(
              'api/platform/vl53l1_platform.c',
              'python_lib/vl53l1x_python.c'])
 
-setup(name='vl53l1x',
+setup(name='VL53L1X',
       version='0.0.1',
       description='vl53l1x distance sensor driver for Raspberry Pi',
       # author='?',

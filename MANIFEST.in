@@ -1,0 +1,13 @@
+include api/core/vl53l1_api_calibration.c
+include api/core/vl53l1_core.c
+include api/core/vl53l1_core_support.c
+include api/core/vl53l1_api_core.c
+include api/core/vl53l1_api_preset_modes.c
+include api/core/vl53l1_silicon_core.c
+include api/core/vl53l1_register_funcs.c
+include api/core/vl53l1_wait.c
+include api/core/vl53l1_error_strings.c
+include api/core/vl53l1_api_strings.c
+include api/core/vl53l1_api.c
+include api/platform/vl53l1_platform.c
+include python_lib/vl53l1x_python.c
