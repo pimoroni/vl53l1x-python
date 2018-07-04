@@ -39,12 +39,17 @@ _I2C_WRITE_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 
 # Load VL53L1X shared lib
 _POSSIBLE_LIBRARY_LOCATIONS = ['../build/lib.linux-armv7l-2.7'] + site.getsitepackages()
+try:
+    _POSSIBLE_LIBRARY_LOCATIONS += [site.getusersitepackages()]
+except AttributeError:
+    pass
+
 for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
-    #try:
+    try:
         _TOF_LIBRARY = CDLL(lib_location + "/vl53l1x_python.so")
         break
-    #except OSError:
-    #    pass
+    except OSError:
+        pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
 
