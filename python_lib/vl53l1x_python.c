@@ -36,16 +36,6 @@ SOFTWARE.
 static VL53L1_RangingMeasurementData_t RangingMeasurementData;
 static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasurementData;
 
-VL53L1_Error WaitMeasurementDataReady(VL53L1_Dev_t *dev)
-{
-    return VL53L1_ERROR_NONE;
-}
-
-VL53L1_Error WaitStopCompleted(VL53L1_Dev_t *dev)
-{
-    return VL53L1_ERROR_NONE;
-}
-    
 /******************************************************************************
  * @brief   Initialises the device.
  *  @param  i2c_address - I2C Address to set for this device
@@ -87,6 +77,9 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
         }
     //}
 
+    VL53L1_PerformRefSpadManagement(dev);
+    VL53L1_SetXTalkCompensationEnable(dev, 0); // Disable crosstalk compensation (bare sensor)
+
     return dev;
 }
 
@@ -124,7 +117,7 @@ VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
     VL53L1_Error Status = VL53L1_ERROR_NONE;
     Status = VL53L1_SetDistanceMode(dev, mode);
     Status = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 66000);
-    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 10);
+    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 70);
     Status = VL53L1_StartMeasurement(dev);
     return Status;
 }
