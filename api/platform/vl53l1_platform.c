@@ -291,7 +291,7 @@ VL53L1_Error VL53L1_GetTimerFrequency(int32_t *ptimer_freq_hz)
 }
 
 VL53L1_Error VL53L1_WaitMs(VL53L1_DEV pdev, int32_t wait_ms){
-	sleep(wait_ms);
+	usleep(wait_ms * 1000);
     return VL53L1_ERROR_NONE;
 	//VL53L1_Error status  = VL53L1_ERROR_NONE;
 	//return status;
@@ -306,14 +306,30 @@ VL53L1_Error VL53L1_WaitUs(VL53L1_DEV pdev, int32_t wait_us){
 
 VL53L1_Error VL53L1_WaitValueMaskEx(
 	VL53L1_DEV pdev,
-	uint32_t	  timeout_ms,
-	uint16_t	  index,
+	uint32_t   timeout_ms,
+	uint16_t   index,
 	uint8_t	   value,
 	uint8_t	   mask,
-	uint32_t	  poll_delay_ms)
+	uint32_t   poll_delay_ms)
 {
+	uint8_t  register_value = 0;
+
 	VL53L1_Error status  = VL53L1_ERROR_NONE;
-	return status;
+
+	int32_t attempts = timeout_ms / poll_delay_ms;
+
+	for(int32_t x = 0; x < attempts; x++){
+		status = VL53L1_RdByte(
+					pdev,
+					index,
+					&register_value);
+		if (status == VL53L1_ERROR_NONE && (register_value & mask) == value) {
+			return VL53L1_ERROR_NONE;
+		}
+		usleep(poll_delay_ms * 1000);
+	}
+
+	return VL53L1_ERROR_TIME_OUT;
 }
 
 
