@@ -135,7 +135,7 @@ class VL53L1X:
     def get_timing(self):
         budget = c_uint(0)
         budget_p = pointer(budget)
-        status = _TOF_LIBRARY.VL53L1X_GetMeasurementTimingBudgetMicroSeconds(self._dev, budget_p)
+        status = _TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds(self._dev, budget_p)
         if status == 0:
             return budget.value + 1000
         else:
