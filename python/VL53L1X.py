@@ -23,6 +23,7 @@
 # SOFTWARE.
 from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_uint8, c_uint32
 from smbus2 import SMBus, i2c_msg
+import os
 import site
 
 class VL53L1xError(RuntimeError):
@@ -38,7 +39,7 @@ _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 _I2C_WRITE_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 
 # Load VL53L1X shared lib
-_POSSIBLE_LIBRARY_LOCATIONS = ['../build/lib.linux-armv7l-2.7'] + site.getsitepackages()
+_POSSIBLE_LIBRARY_LOCATIONS = [os.path.dirname(os.path.realpath(__file__))] + site.getsitepackages()
 try:
     _POSSIBLE_LIBRARY_LOCATIONS += [site.getusersitepackages()]
 except AttributeError:
@@ -47,8 +48,10 @@ except AttributeError:
 for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
     try:
         _TOF_LIBRARY = CDLL(lib_location + "/vl53l1x_python.so")
+        #print("Using: " + lib_location + "/vl51l1x_python.so")
         break
     except OSError:
+        #print(lib_location + "/vl51l1x_python.so not found")
         pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
