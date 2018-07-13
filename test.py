@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 sys.path.insert(0,"build/lib.linux-armv7l-2.7/")
 
