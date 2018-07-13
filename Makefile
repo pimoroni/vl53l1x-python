@@ -3,7 +3,7 @@
 SRC = api
 LIB = libvl53l1_api.a
 LDFLAGS :=
-CFLAGS := -Iapi/core -Iapi/platform
+CFLAGS := -Iapi/core -Iapi/platform -std=c99
 
 SRC_FILES := $(wildcard $(SRC)/*/*.c)
 SRC_FILES := $(wildcard $(SRC)/*/*.c)
