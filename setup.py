@@ -3,6 +3,7 @@ from setuptools import setup, Extension
 extension = Extension(
     'vl53l1x_python',
     define_macros=[],
+    extra_compile_args=['-std=c99'],
     include_dirs=['.', 'api/core', 'api/platform'],
     libraries=[],
     library_dirs=[],
