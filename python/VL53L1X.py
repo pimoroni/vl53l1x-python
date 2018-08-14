@@ -25,6 +25,7 @@ from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_
 from smbus2 import SMBus, i2c_msg
 import os
 import site
+import glob
 
 class VL53L1xError(RuntimeError):
     pass
@@ -40,19 +41,23 @@ _I2C_WRITE_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 
 # Load VL53L1X shared lib
 _POSSIBLE_LIBRARY_LOCATIONS = [os.path.dirname(os.path.realpath(__file__))] + site.getsitepackages()
+
 try:
     _POSSIBLE_LIBRARY_LOCATIONS += [site.getusersitepackages()]
 except AttributeError:
     pass
 
 for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
-    try:
-        _TOF_LIBRARY = CDLL(lib_location + "/vl53l1x_python.so")
-        #print("Using: " + lib_location + "/vl51l1x_python.so")
-        break
-    except OSError:
-        #print(lib_location + "/vl51l1x_python.so not found")
-        pass
+    files = glob.glob(lib_location + "/vl53l1x_python*.so")
+    if len(files) > 0:
+        lib_file = files[0]
+        try:
+            _TOF_LIBRARY = CDLL(lib_file)
+            #print("Using: " + lib_location + "/vl51l1x_python.so")
+            break
+        except OSError:
+            #print(lib_location + "/vl51l1x_python.so not found")
+            pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
 
