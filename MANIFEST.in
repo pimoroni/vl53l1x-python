@@ -11,3 +11,5 @@ include api/core/vl53l1_api_strings.c
 include api/core/vl53l1_api.c
 include api/platform/vl53l1_platform.c
 include python_lib/vl53l1x_python.c
+include README.rst
+include CHANGELOG.txt
