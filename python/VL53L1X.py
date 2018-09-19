@@ -40,7 +40,12 @@ _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 _I2C_WRITE_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 
 # Load VL53L1X shared lib
-_POSSIBLE_LIBRARY_LOCATIONS = [os.path.dirname(os.path.realpath(__file__))] + site.getsitepackages()
+_POSSIBLE_LIBRARY_LOCATIONS = [os.path.dirname(os.path.realpath(__file__))]
+
+try:
+    _POSSIBLE_LIBRARY_LOCATIONS += site.getsitepackages()
+except AttributeError:
+    pass
 
 try:
     _POSSIBLE_LIBRARY_LOCATIONS += [site.getusersitepackages()]
