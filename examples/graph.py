@@ -26,8 +26,11 @@ Press Ctrl+C to exit.
 """
 Grab the width/height of the terminal using `stty size`
 """
-rows, cols = [int(c) for c in os.popen("stty size", "r").read().split()]
-
+try:
+    rows, cols = [int(c) for c in os.popen("stty size", "r").read().split()]
+except ValueError:
+    print("Cannot get size of tty! Try running in Terminal.")
+    sys.exit(1)
 
 """
 Open and start the VL53L1X ranging sensor
