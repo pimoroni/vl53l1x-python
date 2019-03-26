@@ -101,7 +101,6 @@ class VL53L1X:
     def _configure_i2c_library_functions(self):
         # I2C bus read callback for low level library.
         def _i2c_read(address, reg, data_p, length):
-            print("I2C Addr: {:02x}".format(address))
             ret_val = 0
 
             msg_w = i2c_msg.write(address, [reg >> 8, reg & 0xff])
