@@ -45,7 +45,7 @@ static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasur
  *              being used. If not being used, set to 0.
  * @retval  The Dev Object to pass to other library functions.
  *****************************************************************************/
-VL53L1_DEV *initialise(uint8_t i2c_address)
+VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t perform_reset)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
     uint32_t refSpadCount;
@@ -61,8 +61,12 @@ VL53L1_DEV *initialise(uint8_t i2c_address)
     memset(dev, 0, sizeof(VL53L1_Dev_t));
 
     dev->I2cDevAddr = i2c_address;
-    Status = VL53L1_software_reset(dev);
-    Status = VL53L1_WaitDeviceBooted(dev);
+
+    if(perform_reset){
+        Status = VL53L1_software_reset(dev);
+        dev->I2cDevAddr = 0x29; // Resetting will reset i2c address back to default
+        Status = VL53L1_WaitDeviceBooted(dev);
+    }
     Status = VL53L1_DataInit(dev);
     Status = VL53L1_StaticInit(dev);
     //if(Status == VL53L1_ERROR_NONE){
@@ -87,7 +91,9 @@ VL53L1_Error setDeviceAddress(VL53L1_Dev_t *dev, int i2c_address)
 {
     printf("Set addr: %x", i2c_address);
     VL53L1_Error Status = VL53L1_SetDeviceAddress(dev, i2c_address << 1);
-    dev->I2cDevAddr = i2c_address;
+    if(Status == 0){
+        dev->I2cDevAddr = i2c_address;
+    }
     return Status;
 }
 

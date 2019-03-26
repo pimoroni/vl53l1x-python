@@ -76,6 +76,11 @@ class VL53L1X:
         self._tca9548a_num = tca9548a_num
         self._tca9548a_addr = tca9548a_addr
         self._i2c = SMBus(1)
+        try:
+            self._i2c.read_byte_data(self.i2c_address, 0x00)
+        except IOError:
+            raise RuntimeError("VL53L1X not found on adddress: {:02x}".format(self.i2c_address))
+
         self._dev = None
         # Resgiter Address
         self.ADDR_UNIT_ID_HIGH = 0x16 # Serial number high byte
@@ -84,10 +89,10 @@ class VL53L1X:
         self.ADDR_I2C_ID_LOW = 0x19 # Write serial number low byte for I2C address unlock
         self.ADDR_I2C_SEC_ADDR = 0x8a # Write new I2C address after unlock
 
-    def open(self):
+    def open(self, reset=False):
         self._i2c.open(bus=self._i2c_bus)
         self._configure_i2c_library_functions()
-        self._dev = _TOF_LIBRARY.initialise(self.i2c_address)
+        self._dev = _TOF_LIBRARY.initialise(self.i2c_address, reset)
 
     def close(self):
         self._i2c.close()
@@ -96,6 +101,7 @@ class VL53L1X:
     def _configure_i2c_library_functions(self):
         # I2C bus read callback for low level library.
         def _i2c_read(address, reg, data_p, length):
+            print("I2C Addr: {:02x".format(address))
             ret_val = 0
 
             msg_w = i2c_msg.write(address, [reg >> 8, reg & 0xff])
@@ -152,4 +158,9 @@ class VL53L1X:
             return 0
 
     def change_address(self, new_address):
-        _TOF_LIBRARY.setDeviceAddress(self._dev, new_address)
+        status = _TOF_LIBRARY.setDeviceAddress(self._dev, new_address << 1)
+        if status == 0:
+            self.i2c_address = new_address
+        else:
+            raise RuntimeError("change_address failed with code: {}".format(status))
+        return True
