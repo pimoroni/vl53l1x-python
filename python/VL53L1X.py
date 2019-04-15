@@ -27,14 +27,17 @@ import os
 import site
 import glob
 
+
 class VL53L1xError(RuntimeError):
     pass
+
 
 class VL53L1xDistanceMode:
     NONE = 0
     SHORT = 1
     MEDIUM = 2
     LONG = 3
+
 
 # Read/write function pointer types.
 _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
@@ -59,10 +62,10 @@ for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
         lib_file = files[0]
         try:
             _TOF_LIBRARY = CDLL(lib_file)
-            #print("Using: " + lib_location + "/vl51l1x_python.so")
+            # print("Using: " + lib_location + "/vl51l1x_python.so")
             break
         except OSError:
-            #print(lib_location + "/vl51l1x_python.so not found")
+            # print(lib_location + "/vl51l1x_python.so not found")
             pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
@@ -79,11 +82,11 @@ class VL53L1X:
         self._i2c = SMBus(1)
         self._dev = None
         # Resgiter Address
-        self.ADDR_UNIT_ID_HIGH = 0x16 # Serial number high byte
-        self.ADDR_UNIT_ID_LOW = 0x17 # Serial number low byte
-        self.ADDR_I2C_ID_HIGH = 0x18 # Write serial number high byte for I2C address unlock
-        self.ADDR_I2C_ID_LOW = 0x19 # Write serial number low byte for I2C address unlock
-        self.ADDR_I2C_SEC_ADDR = 0x8a # Write new I2C address after unlock
+        self.ADDR_UNIT_ID_HIGH = 0x16  # Serial number high byte
+        self.ADDR_UNIT_ID_LOW = 0x17   # Serial number low byte
+        self.ADDR_I2C_ID_HIGH = 0x18   # Write serial number high byte for I2C address unlock
+        self.ADDR_I2C_ID_LOW = 0x19    # Write serial number low byte for I2C address unlock
+        self.ADDR_I2C_SEC_ADDR = 0x8a  # Write new I2C address after unlock
 
     def open(self):
         self._i2c.open(bus=self._i2c_bus)
