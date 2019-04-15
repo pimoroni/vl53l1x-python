@@ -92,34 +92,45 @@ VL53L1_Error setDeviceAddress(VL53L1_Dev_t *dev, int i2c_address)
 }
 
 /******************************************************************************
+ * @brief   Set Distance Mode
+ * @param   mode - ranging mode
+ *              1 - Short-range mode
+ *              2 - Medium-range mode
+ *              3 - Long-range mode
+ * @retval  Error code, 0 for success.
+ *****************************************************************************/
+VL53L1_Error setDistanceMode(VL53L1_Dev_t *dev, int mode)
+{
+    VL53L1_Error Status = VL53L1_ERROR_NONE;
+    Status = VL53L1_SetDistanceMode(dev, mode);
+    return Status;
+}
+
+/******************************************************************************
  * @brief   Start Ranging
  * @param   mode - ranging mode
- *              0 - Good Accuracy mode
- *              1 - Better Accuracy mode
- *              2 - Best Accuracy mode
- *              3 - Longe Range mode
- *              4 - High Speed mode
- * @note Mode Definitions
- *   Good Accuracy mode
- *       33 ms timing budget 1.2m range
- *   Better Accuracy mode
- *       66 ms timing budget 1.2m range
- *   Best Accuracy mode
- *       200 ms 1.2m range
- *   Long Range mode (indoor,darker conditions)
- *       33 ms timing budget 2m range
- *   High Speed Mode (decreased accuracy)
- *       20 ms timing budget 1.2m range
+ *              0 - Unchanged
+ *              1 - Short-range mode
+ *              2 - Medium-range mode
+ *              3 - Long-range mode
  * @retval  Error code, 0 for success.
  *****************************************************************************/
 VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
-    Status = VL53L1_SetDistanceMode(dev, mode);
-    Status = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 66000);
-    Status = VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, 70);
+    if (mode > 0) {
+        Status = setDistanceMode(dev, mode);
+    }
     Status = VL53L1_StartMeasurement(dev);
     return Status;
+}
+
+VL53L1_Error setMeasurementTimingBudgetMicroSeconds(VL53L1_Dev_t *dev, int timing_budget) {
+    return VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, timing_budget);
+}
+
+VL53L1_Error setInterMeasurementPeriodMilliSeconds(VL53L1_Dev_t *dev, int period) {
+    return VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, period);
 }
 
 /******************************************************************************

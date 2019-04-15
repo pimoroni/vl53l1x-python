@@ -31,6 +31,7 @@ class VL53L1xError(RuntimeError):
     pass
 
 class VL53L1xDistanceMode:
+    NONE = 0
     SHORT = 1
     MEDIUM = 2
     LONG = 3
@@ -132,6 +133,14 @@ class VL53L1X:
         """Start VL53L1X ToF Sensor Ranging"""
         _TOF_LIBRARY.startRanging(self._dev, mode)
 
+    def set_distance_mode(self, mode):
+        """Set distance mode
+
+        :param mode: One of 1 = Short, 2 = Medium or 3 = Long
+
+        """
+        _TOF_LIBRARY.setDistanceMode(self._dev, mode)
+
     def stop_ranging(self):
         """Stop VL53L1X ToF Sensor Ranging"""
         _TOF_LIBRARY.stopRanging(self._dev)
@@ -139,6 +148,35 @@ class VL53L1X:
     def get_distance(self):
         """Get distance from VL53L1X ToF Sensor"""
         return _TOF_LIBRARY.getDistance(self._dev)
+
+    def set_timing(self, timing_budget, inter_measurement_period):
+        """Set the timing budget and inter measurement period.
+
+        A higher timing budget results in greater measurement accuracy,
+        but also a higher power consumption.
+
+        The inter measurement period must be >= the timing budget, otherwise
+        it will be double the expected value.
+
+        :param timing_budget: Timing budget in microseconds
+        :param inter_measurement_period: Inter Measurement Period in milliseconds
+
+        """
+        if (inter_measurement_period * 1000) < timing_budget:
+            raise ValueError("The Inter Measurement Period must be >= Timing Budget")
+        print("Setting timing budget: {}".format(timing_budget))
+        self.set_timing_budget(timing_budget)
+        print("Setting period: {}".format(inter_measurement_period))
+        self.set_inter_measurement_period(inter_measurement_period)
+
+    def set_timing_budget(self, timing_budget):
+        """Set the timing budget in microseocnds"""
+        _TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds(self._dev, timing_budget)
+
+    def set_inter_measurement_period(self, period):
+        """Set the inter-measurement period in milliseconds"""
+        print("Huh: {}".format(period))
+        _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds(self._dev, period)
 
     # This function included to show how to access the ST library directly
     # from python instead of through the simplified interface
