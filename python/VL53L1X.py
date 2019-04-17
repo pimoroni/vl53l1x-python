@@ -75,7 +75,7 @@ class VL53L1X:
         self.i2c_address = i2c_address
         self._tca9548a_num = tca9548a_num
         self._tca9548a_addr = tca9548a_addr
-        self._i2c = SMBus(1)
+        self._i2c = SMBus(i2c_bus)
         self._dev = None
         # Resgiter Address
         self.ADDR_UNIT_ID_HIGH = 0x16 # Serial number high byte
