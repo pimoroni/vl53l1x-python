@@ -67,6 +67,7 @@
 #include "vl53l1_api.h"
 
 // #include "stm32xxx_hal.h"
+#include <pthread.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -157,7 +158,7 @@ static int i2c_write(VL53L1_DEV Dev, uint8_t cmd,
 
         if (result == VL53L1_ERROR_NONE)
         {
-            if (i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+            if (i2c_write_func(Dev->I2cDevAddr, cmd, data, len) < 0)
             {
                 result =  VL53L1_ERROR_CONTROL_INTERFACE;
             }
