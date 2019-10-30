@@ -113,6 +113,9 @@
 //	return Status;
 // }
 
+// calls the i2c write to multiplexer function
+static int (*i2c_multi_func)(uint8_t address, uint8_t reg) = NULL;
+
 // calls read_i2c_block_data(address, reg, length)
 static int (*i2c_read_func)(uint8_t address, uint8_t reg,
 					uint8_t *list, uint8_t length) = NULL;
@@ -121,8 +124,11 @@ static int (*i2c_read_func)(uint8_t address, uint8_t reg,
 static int (*i2c_write_func)(uint8_t address, uint8_t reg,
 					uint8_t *list, uint8_t length) = NULL;
 
-void VL53L1_set_i2c(void *read_func, void *write_func)
+static pthread_mutex_t i2c_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void VL53L1_set_i2c(void *multi_func, void *read_func, void *write_func)
 {
+	i2c_multi_func = multi_func;
 	i2c_read_func = read_func;
 	i2c_write_func = write_func;
 }
@@ -134,9 +140,32 @@ static int i2c_write(VL53L1_DEV Dev, uint8_t cmd,
 
     if (i2c_write_func != NULL)
     {
-        if (i2c_write_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+        if (Dev->TCA9548A_Device < 8)
         {
-            result = VL53L1_ERROR_CONTROL_INTERFACE;
+            // Make sure that the call to set the bus on the TCA9548A is
+            // synchronized with the read of the VL53L1X device to allow
+            // to make the transaction thread-safe
+            pthread_mutex_lock(&i2c_mutex);
+
+            // Write to the multiplexer
+            if (i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
+            {
+                printf("i2c bus on multiplexer not set.\n");
+                result =  VL53L1_ERROR_CONTROL_INTERFACE;
+            }
+        }
+
+        if (result == VL53L1_ERROR_NONE)
+        {
+            if (i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+            {
+                result =  VL53L1_ERROR_CONTROL_INTERFACE;
+            }
+        }
+
+        if (Dev->TCA9548A_Device < 8)
+        {
+            pthread_mutex_unlock(&i2c_mutex);
         }
     }
     else
@@ -155,9 +184,32 @@ static int i2c_read(VL53L1_DEV Dev, uint8_t cmd,
 
     if (i2c_read_func != NULL)
     {
-        if (i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+        if (Dev->TCA9548A_Device < 8)
         {
-            result =  VL53L1_ERROR_CONTROL_INTERFACE;
+            // Make sure that the call to set the bus on the TCA9548A is
+            // synchronized with the read of the VL53L1X device to allow
+            // to make the transaction thread-safe
+            pthread_mutex_lock(&i2c_mutex);
+
+            // Write to the multiplexer
+            if (i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
+            {
+                printf("i2c bus on multiplexer not set.\n");
+                result =  VL53L1_ERROR_CONTROL_INTERFACE;
+            }
+        }
+
+        if (result == VL53L1_ERROR_NONE)
+        {
+            if (i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+            {
+                result =  VL53L1_ERROR_CONTROL_INTERFACE;
+            }
+        }
+
+        if (Dev->TCA9548A_Device < 8)
+        {
+            pthread_mutex_unlock(&i2c_mutex);
         }
     }
     else

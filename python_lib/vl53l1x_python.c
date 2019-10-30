@@ -45,7 +45,7 @@ static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasur
  *              being used. If not being used, set to 0.
  * @retval  The Dev Object to pass to other library functions.
  *****************************************************************************/
-VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t perform_reset)
+VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
     uint32_t refSpadCount;
@@ -57,16 +57,29 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t perform_reset)
     VL53L1_DeviceInfo_t                DeviceInfo;
     int32_t status_int;
 
+    if (TCA9548A_Device < 8)
+    {
+        printf ("VL53L1X Start Ranging Address 0x%02X TCA9548A Device %d TCA9548A Address 0x%02X\n\n",
+                    i2c_address, TCA9548A_Device, TCA9548A_Address);
+    }
+    else
+    {
+        printf ("VL53L1X Start Ranging Address 0x%02X\n\n", i2c_address);
+    }
+
     VL53L1_Dev_t *dev = (VL53L1_Dev_t *)malloc(sizeof(VL53L1_Dev_t));
     memset(dev, 0, sizeof(VL53L1_Dev_t));
 
     dev->I2cDevAddr = i2c_address;
+    dev->TCA9548A_Device = TCA9548A_Device;
+    dev->TCA9548A_Address = TCA9548A_Address;
 
     if(perform_reset){
         Status = VL53L1_software_reset(dev);
         dev->I2cDevAddr = 0x29; // Resetting will reset i2c address back to default
         Status = VL53L1_WaitDeviceBooted(dev);
     }
+
     Status = VL53L1_DataInit(dev);
     Status = VL53L1_StaticInit(dev);
     //if(Status == VL53L1_ERROR_NONE){

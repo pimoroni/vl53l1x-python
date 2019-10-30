@@ -1,3 +1,8 @@
+0.0.3
+-----
+
+* Fix: Use i2c_bus param for use with alternate buses/soft i2c
+
 0.0.2
 -----
 
