@@ -72,6 +72,18 @@ extern "C"
 {
 #endif
 
+#if !defined(VL53L1DevDataGet)
+#warning "Usage of PALDevDataGet is deprecated define VL53L1DevDataGet instead\
+	in your vl53l1_platform_user_data.h file"
+#define VL53L1DevDataGet(Dev, field) (Dev->Data.field)
+#endif
+
+#if !defined(VL53L1DevDataSet)
+#warning "Usage of PALDevDataSet is deprecated define VL53L1DevDataSet instead\
+	in your vl53l1_platform_user_data.h file"
+#define VL53L1DevDataSet(Dev, field, data) ((Dev->Data.field) = (data))
+#endif
+
 /** @defgroup VL53L1_cut11_group VL53L1 cut1.1 Function Definition
  *  @brief    VL53L1 cut1.1 Function Definition
  *  @{
@@ -403,6 +415,9 @@ VL53L1_Error VL53L1_GetMeasurementTimingBudgetMicroSeconds(
  *
  * @param   Dev                                  Device Handle
  * @param   InterMeasurementPeriodMilliSeconds   Inter-Measurement Period in ms.
+ *  this value should be greater than the duration set in
+ *  @a VL53L1_SetMeasurementTimingBudgetMicroSeconds() to ensure smooth ranging
+ *  operation.
  * @return  VL53L1_ERROR_NONE            Success
  * @return  "Other error code"           See ::VL53L1_Error
  */
@@ -761,8 +776,12 @@ VL53L1_Error VL53L1_GetSequenceStepEnable(VL53L1_DEV Dev,
  * @return  VL53L1_ERROR_NONE                  Success
  * @return  VL53L1_ERROR_MODE_NOT_SUPPORTED    This error occurs when
  * PresetMode programmed with @a VL53L1_SetPresetMode
- *
  * @return  VL53L1_ERROR_TIME_OUT    Time out on start measurement
+ * @return  VL53L1_ERROR_INVALID_PARAMS This error might occur in timed mode
+ * when inter measurement period is smaller or too close to the timing budget.
+ * In such case measurements are not started and user must correct the timings
+ * passed to @a VL53L1_SetMeasurementTimingBudgetMicroSeconds() and
+ * @a VL53L1_SetInterMeasurementPeriodMilliSeconds() functions.
  * @return  "Other error code"   See ::VL53L1_Error
  */
 VL53L1_Error VL53L1_StartMeasurement(VL53L1_DEV Dev);
