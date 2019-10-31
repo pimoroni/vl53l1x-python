@@ -16,7 +16,8 @@ ANSI_COLOR_GREEN = "\x1b[32m"
 ANSI_COLOR_RESET = "\x1b[0m"
 
 
-UPDATE_TIME_MS = 20
+UPDATE_TIME_MICROS = 1000
+INTER_MEASUREMENT_PERIOD_MILLIS = 100
 
 print("""graph.py
 
@@ -43,7 +44,7 @@ tof.open()  # Initialise the i2c bus and configure the sensor
 tof.set_distance_mode(3)
 
 # Lower timing budgets allow for faster updates, but sacrifice accuracy
-tof.set_timing(UPDATE_TIME_MS * 1000, UPDATE_TIME_MS)
+tof.set_timing(UPDATE_TIME_MICROS, INTER_MEASUREMENT_PERIOD_MILLIS)
 
 tof.start_ranging(0)
 
@@ -79,4 +80,4 @@ while running:
     sys.stdout.write(u"{:04.1f}cm {}".format(distance_in_mm / 10.0, bar))     # Output our measurement and bar
     sys.stdout.write(ANSI_COLOR_RESET)
     sys.stdout.flush()                   # Flush the output buffer, since we're overdrawing the last line
-    time.sleep(UPDATE_TIME_MS / 1000.0)
+    time.sleep(INTER_MEASUREMENT_PERIOD_MILLIS / 1000.0)
