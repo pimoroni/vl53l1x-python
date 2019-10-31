@@ -144,10 +144,18 @@ VL53L1_Error startRanging(VL53L1_Dev_t *dev, int mode)
     return Status;
 }
 
+/******************************************************************************
+ * @brief   Set the measurement timing budget in microseconds
+ * @return  Error code, 0 for success.
+ *****************************************************************************/
 VL53L1_Error setMeasurementTimingBudgetMicroSeconds(VL53L1_Dev_t *dev, int timing_budget) {
     return VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, timing_budget);
 }
 
+/******************************************************************************
+ * @brief   Set the inter-measurement period in milliseconds
+ * @return  Error code, 0 for success.
+ *****************************************************************************/
 VL53L1_Error setInterMeasurementPeriodMilliSeconds(VL53L1_Dev_t *dev, int period) {
     return VL53L1_SetInterMeasurementPeriodMilliSeconds(dev, period);
 }
@@ -172,5 +180,5 @@ int32_t getDistance(VL53L1_Dev_t *dev)
  *****************************************************************************/
 void stopRanging(VL53L1_Dev_t *dev)
 {
-    return VL53L1_StopMeasurement(dev);
+    VL53L1_StopMeasurement(dev);
 }
