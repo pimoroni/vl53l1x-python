@@ -184,9 +184,8 @@ class VL53L1X:
         """
         if (inter_measurement_period * 1000) < timing_budget:
             raise ValueError("The Inter Measurement Period must be >= Timing Budget")
-        print("Setting timing budget: {}".format(timing_budget))
+
         self.set_timing_budget(timing_budget)
-        print("Setting period: {}".format(inter_measurement_period))
         self.set_inter_measurement_period(inter_measurement_period)
 
     def set_timing_budget(self, timing_budget):
@@ -195,7 +194,6 @@ class VL53L1X:
 
     def set_inter_measurement_period(self, period):
         """Set the inter-measurement period in milliseconds"""
-        print("Huh: {}".format(period))
         _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds(self._dev, period)
 
     # This function included to show how to access the ST library directly
