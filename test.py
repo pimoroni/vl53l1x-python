@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys
-sys.path.insert(0,"build/lib.linux-armv7l-2.7/")
+sys.path.insert(0, "build/lib.linux-armv7l-2.7/")
 
 import VL53L1X
 import time

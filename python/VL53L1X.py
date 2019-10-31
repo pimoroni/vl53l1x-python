@@ -27,13 +27,17 @@ import os
 import site
 import glob
 
+
 class VL53L1xError(RuntimeError):
     pass
 
+
 class VL53L1xDistanceMode:
+    NONE = 0
     SHORT = 1
     MEDIUM = 2
     LONG = 3
+
 
 # Read/write function pointer types.
 _I2C_MULTI_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte)
@@ -59,10 +63,10 @@ for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
         lib_file = files[0]
         try:
             _TOF_LIBRARY = CDLL(lib_file)
-            #print("Using: " + lib_location + "/vl51l1x_python.so")
+            # print("Using: " + lib_location + "/vl51l1x_python.so")
             break
         except OSError:
-            #print(lib_location + "/vl51l1x_python.so not found")
+            # print(lib_location + "/vl51l1x_python.so not found")
             pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
@@ -85,11 +89,11 @@ class VL53L1X:
 
         self._dev = None
         # Register Address
-        self.ADDR_UNIT_ID_HIGH = 0x16 # Serial number high byte
-        self.ADDR_UNIT_ID_LOW = 0x17 # Serial number low byte
-        self.ADDR_I2C_ID_HIGH = 0x18 # Write serial number high byte for I2C address unlock
-        self.ADDR_I2C_ID_LOW = 0x19 # Write serial number low byte for I2C address unlock
-        self.ADDR_I2C_SEC_ADDR = 0x8a # Write new I2C address after unlock
+        self.ADDR_UNIT_ID_HIGH = 0x16  # Serial number high byte
+        self.ADDR_UNIT_ID_LOW = 0x17   # Serial number low byte
+        self.ADDR_I2C_ID_HIGH = 0x18   # Write serial number high byte for I2C address unlock
+        self.ADDR_I2C_ID_LOW = 0x19    # Write serial number low byte for I2C address unlock
+        self.ADDR_I2C_SEC_ADDR = 0x8a  # Write new I2C address after unlock
 
     def open(self, reset=False):
         self._i2c.open(bus=self._i2c_bus)
@@ -149,6 +153,14 @@ class VL53L1X:
         """Start VL53L1X ToF Sensor Ranging"""
         _TOF_LIBRARY.startRanging(self._dev, mode)
 
+    def set_distance_mode(self, mode):
+        """Set distance mode
+
+        :param mode: One of 1 = Short, 2 = Medium or 3 = Long
+
+        """
+        _TOF_LIBRARY.setDistanceMode(self._dev, mode)
+
     def stop_ranging(self):
         """Stop VL53L1X ToF Sensor Ranging"""
         _TOF_LIBRARY.stopRanging(self._dev)
@@ -156,6 +168,33 @@ class VL53L1X:
     def get_distance(self):
         """Get distance from VL53L1X ToF Sensor"""
         return _TOF_LIBRARY.getDistance(self._dev)
+
+    def set_timing(self, timing_budget, inter_measurement_period):
+        """Set the timing budget and inter measurement period.
+
+        A higher timing budget results in greater measurement accuracy,
+        but also a higher power consumption.
+
+        The inter measurement period must be >= the timing budget, otherwise
+        it will be double the expected value.
+
+        :param timing_budget: Timing budget in microseconds
+        :param inter_measurement_period: Inter Measurement Period in milliseconds
+
+        """
+        if (inter_measurement_period * 1000) < timing_budget:
+            raise ValueError("The Inter Measurement Period must be >= Timing Budget")
+
+        self.set_timing_budget(timing_budget)
+        self.set_inter_measurement_period(inter_measurement_period)
+
+    def set_timing_budget(self, timing_budget):
+        """Set the timing budget in microseocnds"""
+        _TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds(self._dev, timing_budget)
+
+    def set_inter_measurement_period(self, period):
+        """Set the inter-measurement period in milliseconds"""
+        _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds(self._dev, period)
 
     # This function included to show how to access the ST library directly
     # from python instead of through the simplified interface
