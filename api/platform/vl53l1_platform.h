@@ -76,7 +76,7 @@ extern "C"
 #endif
 
 
-void VL53L1_set_i2c(void *read_func, void *write_func);
+void VL53L1_set_i2c(void *multi_func, void *read_func, void *write_func);
 
 VL53L1_Error VL53L1_CommsInitialise(
 	VL53L1_DEV pdev,

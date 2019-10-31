@@ -40,6 +40,7 @@ class VL53L1xDistanceMode:
 
 
 # Read/write function pointer types.
+_I2C_MULTI_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte)
 _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 _I2C_WRITE_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
 
@@ -79,19 +80,25 @@ class VL53L1X:
         self.i2c_address = i2c_address
         self._tca9548a_num = tca9548a_num
         self._tca9548a_addr = tca9548a_addr
-        self._i2c = SMBus(1)
+
+        self._i2c = SMBus(i2c_bus)
+        try:
+            self._i2c.read_byte_data(self.i2c_address, 0x00)
+        except IOError:
+            raise RuntimeError("VL53L1X not found on adddress: {:02x}".format(self.i2c_address))
+
         self._dev = None
-        # Resgiter Address
+        # Register Address
         self.ADDR_UNIT_ID_HIGH = 0x16  # Serial number high byte
         self.ADDR_UNIT_ID_LOW = 0x17   # Serial number low byte
         self.ADDR_I2C_ID_HIGH = 0x18   # Write serial number high byte for I2C address unlock
         self.ADDR_I2C_ID_LOW = 0x19    # Write serial number low byte for I2C address unlock
         self.ADDR_I2C_SEC_ADDR = 0x8a  # Write new I2C address after unlock
 
-    def open(self):
+    def open(self, reset=False):
         self._i2c.open(bus=self._i2c_bus)
         self._configure_i2c_library_functions()
-        self._dev = _TOF_LIBRARY.initialise(self.i2c_address)
+        self._dev = _TOF_LIBRARY.initialise(self.i2c_address, self._tca9548a_num, self._tca9548a_addr, reset)
 
     def close(self):
         self._i2c.close()
@@ -127,10 +134,20 @@ class VL53L1X:
 
             return ret_val
 
+        # I2C bus write callback for low level library.
+        def _i2c_multi(address, reg):
+            ret_val = 0
+
+            # Write to the multiplexer
+            self._i2c.write_byte(address, reg)
+
+            return ret_val
+
         # Pass i2c read/write function pointers to VL53L1X library.
+        self._i2c_multi_func = _I2C_MULTI_FUNC(_i2c_multi)
         self._i2c_read_func = _I2C_READ_FUNC(_i2c_read)
         self._i2c_write_func = _I2C_WRITE_FUNC(_i2c_write)
-        _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_read_func, self._i2c_write_func)
+        _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_multi_func, self._i2c_read_func, self._i2c_write_func)
 
     def start_ranging(self, mode=VL53L1xDistanceMode.LONG):
         """Start VL53L1X ToF Sensor Ranging"""
@@ -193,4 +210,9 @@ class VL53L1X:
             return 0
 
     def change_address(self, new_address):
-        _TOF_LIBRARY.setDeviceAddress(self._dev, new_address)
+        status = _TOF_LIBRARY.setDeviceAddress(self._dev, new_address)
+        if status == 0:
+            self.i2c_address = new_address
+        else:
+            raise RuntimeError("change_address failed with code: {}".format(status))
+        return True

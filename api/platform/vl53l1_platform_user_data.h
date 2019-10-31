@@ -84,6 +84,8 @@ typedef struct {
 	uint16_t  comms_speed_khz;
 	uint32_t  new_data_ready_poll_duration_ms;
 	I2C_HandleTypeDef *I2cHandle;
+	uint8_t   TCA9548A_Device;           /*!< Device number on TCA9548A I2C Multiplexer or 255 if TCA9548A not being used */
+    uint8_t   TCA9548A_Address;          /*!< Address of TCA9548A I2C Multiplexer or 255 if TCA9548A not being used */
 
 } VL53L1_Dev_t;
 

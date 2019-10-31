@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PYTHON_VERSIONS=(
+	"3.7"
 	"3.5"
 	"3.4"
 	"2.7"
