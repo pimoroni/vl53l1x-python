@@ -2,6 +2,8 @@
 
 Python library for the VL53L1X Laser Ranger.
 
+https://shop.pimoroni.com/products/vl53l1x-breakout
+
 # Installing
 
 ```
