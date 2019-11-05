@@ -16,8 +16,8 @@ ANSI_COLOR_GREEN = "\x1b[32m"
 ANSI_COLOR_RESET = "\x1b[0m"
 
 
-UPDATE_TIME_MICROS = 1000
-INTER_MEASUREMENT_PERIOD_MILLIS = 100
+UPDATE_TIME_MICROS = 66000
+INTER_MEASUREMENT_PERIOD_MILLIS = 70
 
 print("""graph.py
 
@@ -41,11 +41,13 @@ Open and start the VL53L1X ranging sensor
 """
 tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
 tof.open()  # Initialise the i2c bus and configure the sensor
-tof.set_distance_mode(3)
+
+# tof.set_distance_mode(3)
 
 # Lower timing budgets allow for faster updates, but sacrifice accuracy
 tof.set_timing(UPDATE_TIME_MICROS, INTER_MEASUREMENT_PERIOD_MILLIS)
 
+# Start ranging, mode 0 to leave timing unchanged
 tof.start_ranging(0)
 
 sys.stdout.write("\n")
