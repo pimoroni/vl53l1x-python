@@ -83,7 +83,8 @@ class VL53L1X:
 
         self._i2c = SMBus(i2c_bus)
         try:
-            self._i2c.read_byte_data(self.i2c_address, 0x00)
+            if tca9548a_num == 255:
+                self._i2c.read_byte_data(self.i2c_address, 0x00)
         except IOError:
             raise RuntimeError("VL53L1X not found on adddress: {:02x}".format(self.i2c_address))
 
