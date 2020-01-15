@@ -126,6 +126,25 @@ VL53L1_Error setDistanceMode(VL53L1_Dev_t *dev, int mode)
 }
 
 /******************************************************************************
+ * @brief   Set User ROI (Region Of Interest)
+ * @param   userRoi - user ROI
+ * @retval  Error code, 0 for success.
+ *****************************************************************************/
+VL53L1_Error setUserRoi(VL53L1_Dev_t *dev, int topLeftX, int topLeftY, int botRightX, int botRightY)
+{
+    VL53L1_UserRoi_t userRoi;
+    userRoi.TopLeftX = topLeftX;
+    userRoi.TopLeftY = topLeftY;
+    userRoi.BotRightX = botRightX;
+    userRoi.BotRightY = botRightY;
+
+    VL53L1_Error Status = VL53L1_ERROR_NONE;
+    Status = VL53L1_SetUserROI(dev, &userRoi);
+    return Status;
+}
+
+
+/******************************************************************************
  * @brief   Start Ranging
  * @param   mode - ranging mode
  *              0 - Unchanged

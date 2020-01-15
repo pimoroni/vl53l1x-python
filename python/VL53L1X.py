@@ -39,6 +39,14 @@ class VL53L1xDistanceMode:
     LONG = 3
 
 
+class VL53L1xUserRoi:
+    def __init__(self, tlx=0, tly=0, brx=15, bry=15):
+        self.top_left_x = tlx
+        self.top_left_y = tly
+        self.bot_right_x = brx
+        self.bot_right_y = bry
+
+
 # Read/write function pointer types.
 _I2C_MULTI_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte)
 _I2C_READ_FUNC = CFUNCTYPE(c_int, c_ubyte, c_ubyte, POINTER(c_ubyte), c_ubyte)
@@ -149,6 +157,16 @@ class VL53L1X:
         self._i2c_read_func = _I2C_READ_FUNC(_i2c_read)
         self._i2c_write_func = _I2C_WRITE_FUNC(_i2c_write)
         _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_multi_func, self._i2c_read_func, self._i2c_write_func)
+
+    # The ROI is a square or rectangle defined by two corners: top left and bottom right.
+    # Default ROI is 16x16 (indices 0-15). The minimum ROI size is 4x4.
+    def set_user_roi(self, user_roi):
+        """Set Region Of Interest (ROI)"""
+        _TOF_LIBRARY.setUserRoi(self._dev,
+                                user_roi.top_left_x,
+                                user_roi.top_left_y,
+                                user_roi.bot_right_x,
+                                user_roi.bot_right_y)
 
     def start_ranging(self, mode=VL53L1xDistanceMode.LONG):
         """Start VL53L1X ToF Sensor Ranging"""
