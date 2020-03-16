@@ -45,7 +45,7 @@ static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasur
  *              being used. If not being used, set to 0.
  * @retval  The Dev Object to pass to other library functions.
  *****************************************************************************/
-VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
+VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset, void *multi_func, void *read_func, void *write_func)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
     uint32_t refSpadCount;
@@ -77,6 +77,10 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     dev->I2cDevAddr = i2c_address;
     dev->TCA9548A_Device = TCA9548A_Device;
     dev->TCA9548A_Address = TCA9548A_Address;
+
+    dev->i2c_multi_func = multi_func;
+    dev->i2c_read_func = read_func;
+    dev->i2c_write_func = write_func;
 
     if(perform_reset){
         Status = VL53L1_software_reset(dev);
@@ -120,7 +124,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     VL53L1_PerformRefSpadManagement(dev);
     VL53L1_SetXTalkCompensationEnable(dev, 0); // Disable crosstalk compensation (bare sensor)
 
-    return dev;
+    return (VL53L1_DEV *)dev;
 }
 
 VL53L1_Error setDeviceAddress(VL53L1_Dev_t *dev, int i2c_address)
