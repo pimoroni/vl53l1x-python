@@ -65,6 +65,7 @@ def main():
     Display the distance read from the sensor, and publishes over mqtt.
 
     ranging: {}, {}
+    sleep: {}
     broker: {}
     port: {}
     topic: {}
@@ -72,7 +73,12 @@ def main():
     Press Ctrl+C to exit.
 
     """.format(
-            args.ranging, RANGING[args.ranging], args.broker, args.port, args.topic
+            args.ranging,
+            RANGING[args.ranging],
+            args.sleep,
+            args.broker,
+            args.port,
+            args.topic,
         )
     )
 
