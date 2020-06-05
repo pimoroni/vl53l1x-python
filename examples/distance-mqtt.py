@@ -11,7 +11,12 @@ import paho.mqtt.publish as publish
 
 import VL53L1X
 
-DEFAULT_RANGING = 1
+# Ranging
+# 0 = Unchanged
+# 1 = Short Range
+# 2 = Medium Range
+# 3 = Long Range
+DEFAULT_RANGING = 3
 
 DEFAULT_MQTT_BROKER_IP = "localhost"
 DEFAULT_MQTT_BROKER_PORT = 1883
@@ -28,14 +33,6 @@ def on_connect(client, userdata, flags, rc):
 
 def on_publish(client, userdata, mid):
     print("mid: " + str(mid))
-
-
-def exit_handler(signal, frame):
-    global running
-    running = False
-    tof.stop_ranging()
-    print()
-    sys.exit(0)
 
 
 def main():
@@ -82,10 +79,13 @@ def main():
     tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
     tof.open()
     tof.start_ranging(args.ranging)  # Start ranging
-    # 0 = Unchanged
-    # 1 = Short Range
-    # 2 = Medium Range
-    # 3 = Long Range
+
+    def exit_handler(signal, frame):
+        global running
+        running = False
+        tof.stop_ranging()
+        print()
+        sys.exit(0)
 
     running = True
     # Attach a signal handler to catch SIGINT (Ctrl+C) and exit gracefully
