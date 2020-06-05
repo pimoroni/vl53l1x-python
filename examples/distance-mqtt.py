@@ -11,16 +11,14 @@ import paho.mqtt.publish as publish
 
 import VL53L1X
 
-# Ranging
-# 0 = Unchanged
-# 1 = Short Range
-# 2 = Medium Range
-# 3 = Long Range
+RANGING = {0: "Unchanged", 1: "Short Range", 2: "Medium Range", 3: "Long Range"}
 DEFAULT_RANGING = 3
 
 DEFAULT_MQTT_BROKER_IP = "localhost"
 DEFAULT_MQTT_BROKER_PORT = 1883
 DEFAULT_MQTT_TOPIC = "VL53L1X"
+
+DEFAULT_SLEEP = 0.1
 
 # mqtt callbacks
 def on_connect(client, userdata, flags, rc):
@@ -36,7 +34,7 @@ def on_publish(client, userdata, mid):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Publish enviroplus values over mqtt")
+    parser = argparse.ArgumentParser(description="Publish VL53L1X distances over mqtt")
     parser.add_argument(
         "--broker", default=DEFAULT_MQTT_BROKER_IP, type=str, help="mqtt broker IP",
     )
@@ -47,18 +45,26 @@ def main():
         "--topic", default=DEFAULT_MQTT_TOPIC, type=str, help="mqtt topic"
     )
     parser.add_argument(
-        "--ranging", default=DEFAULT_RANGING, type=int, help="ranging mode",
+        "--ranging",
+        default=DEFAULT_RANGING,
+        type=int,
+        choices=[0, 1, 2, 3],
+        help="ranging mode",
+    )
+    parser.add_argument(
+        "--sleep",
+        default=DEFAULT_SLEEP,
+        type=float,
+        help="sleep time between measurements",
     )
     args = parser.parse_args()
 
     print(
-        """distance.py
+        """distance-mqtt.py
 
     Display the distance read from the sensor, and publishes over mqtt.
 
-    Uses the "Short Range" timing budget by default.
-
-
+    ranging: {}, {}
     broker: {}
     port: {}
     topic: {}
@@ -66,7 +72,7 @@ def main():
     Press Ctrl+C to exit.
 
     """.format(
-            args.broker, args.port, args.topic
+            args.ranging, RANGING[args.ranging], args.broker, args.port, args.topic
         )
     )
 
@@ -95,7 +101,7 @@ def main():
         distance_in_mm = tof.get_distance()
         print("Distance: {}mm".format(distance_in_mm))
         mqtt_client.publish(args.topic, json.dumps({"distance_mm": distance_in_mm}))
-        time.sleep(0.2)
+        time.sleep(args.sleep)
 
 
 if __name__ == "__main__":
