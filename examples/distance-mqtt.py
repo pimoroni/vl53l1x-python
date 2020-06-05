@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import json
 import signal
 import sys
@@ -10,9 +11,23 @@ import paho.mqtt.publish as publish
 
 import VL53L1X
 
+DEFAULT_RANGING = 1
+
 DEFAULT_MQTT_BROKER_IP = "localhost"
 DEFAULT_MQTT_BROKER_PORT = 1883
 DEFAULT_MQTT_TOPIC = "VL53L1X"
+
+# mqtt callbacks
+def on_connect(client, userdata, flags, rc):
+    print(f"CONNACK received with code {rc}")
+    if rc == 0:
+        print("connected OK")
+    else:
+        print("Bad connection Returned code=", rc)
+
+
+def on_publish(client, userdata, mid):
+    print("mid: " + str(mid))
 
 
 def exit_handler(signal, frame):
@@ -33,6 +48,9 @@ def main():
     )
     parser.add_argument(
         "--topic", default=DEFAULT_MQTT_TOPIC, type=str, help="mqtt topic"
+    )
+    parser.add_argument(
+        "--ranging", default=DEFAULT_RANGING, type=int, help="ranging mode",
     )
     args = parser.parse_args()
 
@@ -63,7 +81,7 @@ def main():
 
     tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
     tof.open()
-    tof.start_ranging(1)  # Start ranging
+    tof.start_ranging(args.ranging)  # Start ranging
     # 0 = Unchanged
     # 1 = Short Range
     # 2 = Medium Range
