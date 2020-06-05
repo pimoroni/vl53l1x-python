@@ -78,3 +78,7 @@ def main():
         print("Distance: {}mm".format(distance_in_mm))
         mqtt_client.publish(args.topic, json.dumps({"distance_mm": distance_in_mm}))
         time.sleep(0.2)
+
+
+if __name__ == "__main__":
+    main()
