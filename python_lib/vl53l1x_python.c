@@ -57,6 +57,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     VL53L1_DeviceInfo_t                DeviceInfo;
     int32_t status_int;
 
+#ifdef DEBUG
     if (TCA9548A_Device < 8)
     {
         printf ("VL53L1X Start Ranging Address 0x%02X TCA9548A Device %d TCA9548A Address 0x%02X\n\n",
@@ -66,6 +67,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     {
         printf ("VL53L1X Start Ranging Address 0x%02X\n\n", i2c_address);
     }
+#endif
 
     VL53L1_Dev_t *dev = (VL53L1_Dev_t *)malloc(sizeof(VL53L1_Dev_t));
     memset(dev, 0, sizeof(VL53L1_Dev_t));
@@ -83,6 +85,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     Status = VL53L1_DataInit(dev);
     Status = VL53L1_StaticInit(dev);
     //if(Status == VL53L1_ERROR_NONE){
+#ifdef DEBUG
         Status = VL53L1_GetDeviceInfo(dev, &DeviceInfo);
         if(Status == VL53L1_ERROR_NONE){
             printf("VL53L0X_GetDeviceInfo:\n");
@@ -92,6 +95,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
             printf("ProductRevisionMajor : %d\n", DeviceInfo.ProductRevisionMajor);
             printf("ProductRevisionMinor : %d\n", DeviceInfo.ProductRevisionMinor);
         }
+#endif
     //}
 
     VL53L1_PerformRefSpadManagement(dev);
@@ -102,7 +106,9 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
 
 VL53L1_Error setDeviceAddress(VL53L1_Dev_t *dev, int i2c_address)
 {
+#ifdef DEBUG
     printf("Set addr: %x", i2c_address);
+#endif
     VL53L1_Error Status = VL53L1_SetDeviceAddress(dev, i2c_address << 1);
     if(Status == 0){
         dev->I2cDevAddr = i2c_address;
