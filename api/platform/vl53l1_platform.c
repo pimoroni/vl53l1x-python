@@ -115,14 +115,14 @@
 // }
 
 // calls the i2c write to multiplexer function
-static int (*i2c_multi_func)(uint8_t address, uint8_t reg) = NULL;
+static int (*i2c_multi_func)(uint8_t address, uint16_t reg) = NULL;
 
 // calls read_i2c_block_data(address, reg, length)
-static int (*i2c_read_func)(uint8_t address, uint8_t reg,
+static int (*i2c_read_func)(uint8_t address, uint16_t reg,
 					uint8_t *list, uint8_t length) = NULL;
 
 // calls write_i2c_block_data(address, reg, list)
-static int (*i2c_write_func)(uint8_t address, uint8_t reg,
+static int (*i2c_write_func)(uint8_t address, uint16_t reg,
 					uint8_t *list, uint8_t length) = NULL;
 
 static pthread_mutex_t i2c_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -134,7 +134,7 @@ void VL53L1_set_i2c(void *multi_func, void *read_func, void *write_func)
 	i2c_write_func = write_func;
 }
 
-static int i2c_write(VL53L1_DEV Dev, uint8_t cmd,
+static int i2c_write(VL53L1_DEV Dev, uint16_t cmd,
                     uint8_t *data, uint8_t len)
 {
     int result = VL53L1_ERROR_NONE;
@@ -178,7 +178,7 @@ static int i2c_write(VL53L1_DEV Dev, uint8_t cmd,
     return result;
 }
 
-static int i2c_read(VL53L1_DEV Dev, uint8_t cmd,
+static int i2c_read(VL53L1_DEV Dev, uint16_t cmd,
                     uint8_t * data, uint8_t len)
 {
     int result = VL53L1_ERROR_NONE;
