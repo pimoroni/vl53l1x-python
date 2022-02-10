@@ -20,6 +20,7 @@ for ((i = 0; i < ${#PYTHON_VERSIONS[@]}; i++)); do
 	if [[ -f "$PYTHON_PATH" ]]; then
 		printf "Installing for Python $PYTHON_VERSION\n"
 		$PYTHON_PATH -m pip install vl53l1x
+		$PYTHON_PATH -m pip install paho-mqtt
 	else
 		printf "Skipping Python $PYTHON_VERSION\n"
 	fi
