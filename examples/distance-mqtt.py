@@ -34,6 +34,8 @@ def on_publish(client, userdata, mid):
 
 
 def main():
+    global running
+
     parser = argparse.ArgumentParser(description="Publish VL53L1X distances over mqtt")
     parser.add_argument(
         "--broker", default=DEFAULT_MQTT_BROKER_IP, type=str, help="mqtt broker IP",
@@ -92,12 +94,11 @@ def main():
     tof.open()
     tof.start_ranging(args.ranging)  # Start ranging
 
+
     def exit_handler(signal, frame):
         global running
         running = False
-        tof.stop_ranging()
-        print()
-        sys.exit(0)
+
 
     running = True
     # Attach a signal handler to catch SIGINT (Ctrl+C) and exit gracefully
@@ -109,6 +110,11 @@ def main():
         mqtt_client.publish(args.topic, json.dumps({"distance_mm": distance_in_mm}))
         time.sleep(args.sleep)
 
+    tof.stop_ranging()
+    mqtt_client.disconnect()
+    mqtt_client.loop_stop()
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
