@@ -88,18 +88,18 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     Status = VL53L1_RdByte(dev, 0x0110, &ModuleType);
     Status = VL53L1_RdByte(dev, 0x0111, &MaskRev);
 
-# ifdef DEBUG
+#ifdef DEBUG
     printf("VL53L1X I2C-Validity:\n");
     printf("Model ID (should be 0xEA): 0x%X\n", ModelId);
     printf("Module Type (should be 0xCC): 0x%X\n", ModuleType);
     printf("Mask Revision (should be 0x10): 0x%X\n\n", MaskRev);
-#endif
 
     // Check valid I2C interface as shown in VL53L1X data sheet page 22
     if ((ModelId != 0xEA) || (ModuleType != 0xCC) || (MaskRev != 0x10))
     {
       printf("Warning: I2C interface invalid! Data might be corrupted!");
     }
+#endif
 
     Status = VL53L1_DataInit(dev);
     Status = VL53L1_StaticInit(dev);
@@ -107,12 +107,6 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
 #ifdef DEBUG
         Status = VL53L1_GetDeviceInfo(dev, &DeviceInfo);
         if(Status == VL53L1_ERROR_NONE){
-
-            printf("VL53L1X I2C-Validity:\n");
-            printf("Model ID (should be 0xEA): 0x%X\n");
-            printf("Module Type (should be 0xCC): 0x%X\n")
-            printf("Mask Revision (should be 0x10): 0x%X\n\n")
-
             printf("VL53L0X_GetDeviceInfo:\n");
             printf("Device Name : %s\n", DeviceInfo.Name);
             printf("Device Type : %s\n", DeviceInfo.Type);
