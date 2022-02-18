@@ -110,7 +110,14 @@ class VL53L1X:
     def open(self, reset=False):
         self._i2c.open(bus=self._i2c_bus)
         self._configure_i2c_library_functions()
-        self._dev = _TOF_LIBRARY.initialise(self.i2c_address, self._tca9548a_num, self._tca9548a_addr, reset)
+        self._dev = _TOF_LIBRARY.initialise(
+            self.i2c_address,
+            self._tca9548a_num,
+            self._tca9548a_addr,
+            reset,
+            self._i2c_multi_func,
+            self._i2c_read_func,
+            self._i2c_write_func)
 
     def close(self):
         self._i2c.close()
@@ -159,7 +166,7 @@ class VL53L1X:
         self._i2c_multi_func = _I2C_MULTI_FUNC(_i2c_multi)
         self._i2c_read_func = _I2C_READ_FUNC(_i2c_read)
         self._i2c_write_func = _I2C_WRITE_FUNC(_i2c_write)
-        _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_multi_func, self._i2c_read_func, self._i2c_write_func)
+        # _TOF_LIBRARY.VL53L1_set_i2c(self._i2c_multi_func, self._i2c_read_func, self._i2c_write_func)
 
     # The ROI is a square or rectangle defined by two corners: top left and bottom right.
     # Default ROI is 16x16 (indices 0-15). The minimum ROI size is 4x4.

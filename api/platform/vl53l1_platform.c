@@ -114,24 +114,13 @@
 //	return Status;
 // }
 
-// calls the i2c write to multiplexer function
-static int (*i2c_multi_func)(uint8_t address, uint16_t reg) = NULL;
-
-// calls read_i2c_block_data(address, reg, length)
-static int (*i2c_read_func)(uint8_t address, uint16_t reg,
-					uint8_t *list, uint8_t length) = NULL;
-
-// calls write_i2c_block_data(address, reg, list)
-static int (*i2c_write_func)(uint8_t address, uint16_t reg,
-					uint8_t *list, uint8_t length) = NULL;
-
 static pthread_mutex_t i2c_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void VL53L1_set_i2c(void *multi_func, void *read_func, void *write_func)
+void VL53L1_set_i2c(VL53L1_DEV Dev, void *multi_func, void *read_func, void *write_func)
 {
-	i2c_multi_func = multi_func;
-	i2c_read_func = read_func;
-	i2c_write_func = write_func;
+	Dev->i2c_multi_func = multi_func;
+	Dev->i2c_read_func = read_func;
+	Dev->i2c_write_func = write_func;
 }
 
 static int i2c_write(VL53L1_DEV Dev, uint16_t cmd,
@@ -139,7 +128,7 @@ static int i2c_write(VL53L1_DEV Dev, uint16_t cmd,
 {
     int result = VL53L1_ERROR_NONE;
 
-    if (i2c_write_func != NULL)
+    if (Dev->i2c_write_func != NULL)
     {
         if (Dev->TCA9548A_Device < 8)
         {
@@ -149,7 +138,7 @@ static int i2c_write(VL53L1_DEV Dev, uint16_t cmd,
             pthread_mutex_lock(&i2c_mutex);
 
             // Write to the multiplexer
-            if (i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
+            if (Dev->i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
             {
                 printf("i2c bus on multiplexer not set.\n");
                 result =  VL53L1_ERROR_CONTROL_INTERFACE;
@@ -158,7 +147,7 @@ static int i2c_write(VL53L1_DEV Dev, uint16_t cmd,
 
         if (result == VL53L1_ERROR_NONE)
         {
-            if (i2c_write_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+            if (Dev->i2c_write_func(Dev->I2cDevAddr, cmd, data, len) < 0)
             {
                 result =  VL53L1_ERROR_CONTROL_INTERFACE;
             }
@@ -183,7 +172,7 @@ static int i2c_read(VL53L1_DEV Dev, uint16_t cmd,
 {
     int result = VL53L1_ERROR_NONE;
 
-    if (i2c_read_func != NULL)
+    if (Dev->i2c_read_func != NULL)
     {
         if (Dev->TCA9548A_Device < 8)
         {
@@ -193,7 +182,7 @@ static int i2c_read(VL53L1_DEV Dev, uint16_t cmd,
             pthread_mutex_lock(&i2c_mutex);
 
             // Write to the multiplexer
-            if (i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
+            if (Dev->i2c_multi_func(Dev->TCA9548A_Address, (1 << Dev->TCA9548A_Device)) < 0)
             {
                 printf("i2c bus on multiplexer not set.\n");
                 result =  VL53L1_ERROR_CONTROL_INTERFACE;
@@ -202,7 +191,7 @@ static int i2c_read(VL53L1_DEV Dev, uint16_t cmd,
 
         if (result == VL53L1_ERROR_NONE)
         {
-            if (i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
+            if (Dev->i2c_read_func(Dev->I2cDevAddr, cmd, data, len) < 0)
             {
                 result =  VL53L1_ERROR_CONTROL_INTERFACE;
             }
