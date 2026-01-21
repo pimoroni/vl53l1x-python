@@ -21,7 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_uint8, c_uint32, c_uint16
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_uint8, c_uint32, c_uint16, c_void_p
 from smbus2 import SMBus, i2c_msg
 import os
 import site
@@ -78,6 +78,35 @@ for lib_location in _POSSIBLE_LIBRARY_LOCATIONS:
             pass
 else:
     raise OSError('Could not find vl53l1x_python.so')
+
+# Configure ctypes return types for C functions
+# This is critical to prevent segmentation faults!
+_TOF_LIBRARY.initialise.argtypes = [c_ubyte, c_ubyte, c_ubyte, c_ubyte]
+_TOF_LIBRARY.initialise.restype = c_void_p
+
+_TOF_LIBRARY.startRanging.argtypes = [c_void_p, c_int]
+_TOF_LIBRARY.startRanging.restype = c_int
+
+_TOF_LIBRARY.stopRanging.argtypes = [c_void_p]
+_TOF_LIBRARY.stopRanging.restype = None
+
+_TOF_LIBRARY.getDistance.argtypes = [c_void_p]
+_TOF_LIBRARY.getDistance.restype = c_int
+
+_TOF_LIBRARY.setDistanceMode.argtypes = [c_void_p, c_int]
+_TOF_LIBRARY.setDistanceMode.restype = c_int
+
+_TOF_LIBRARY.setUserRoi.argtypes = [c_void_p, c_int, c_int, c_int, c_int]
+_TOF_LIBRARY.setUserRoi.restype = c_int
+
+_TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds.argtypes = [c_void_p, c_int]
+_TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds.restype = c_int
+
+_TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds.argtypes = [c_void_p, c_int]
+_TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds.restype = c_int
+
+_TOF_LIBRARY.setDeviceAddress.argtypes = [c_void_p, c_int]
+_TOF_LIBRARY.setDeviceAddress.restype = c_int
 
 
 class VL53L1X:
