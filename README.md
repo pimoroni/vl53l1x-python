@@ -6,9 +6,13 @@ https://shop.pimoroni.com/products/vl53l1x-breakout
 
 # Installing
 
-```
-sudo pip install smbus2
-sudo pip install vl53l1x
+It is recommended to build and install this package locally inside a virtual environment, as the PyPI version is outdated.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install smbus2
+pip install .
 ```
 
 # Usage
