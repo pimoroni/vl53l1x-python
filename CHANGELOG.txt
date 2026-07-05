@@ -1,3 +1,8 @@
+0.0.6
+-----
+
+* Bugfix: Fix missing usleep on Trixie
+
 0.0.5
 -----
 
