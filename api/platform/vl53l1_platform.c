@@ -62,6 +62,15 @@
 */
 
 
+// usleep() is guarded behind __USE_MISC in glibc's <unistd.h>, which the
+// -std=c99 build flag disables (it defines __STRICT_ANSI__). Requesting
+// _DEFAULT_SOURCE re-exposes it. Without this the declaration is missing and
+// GCC 14+ (Debian 13 / Trixie) rejects the implicit declaration as an error.
+// Must be defined before any system header is (transitively) included.
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
+
 #include "vl53l1_platform.h"
 // #include "vl53l1_platform_log.h"
 #include "vl53l1_api.h"
