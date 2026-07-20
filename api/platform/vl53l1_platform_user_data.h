@@ -87,6 +87,17 @@ typedef struct {
 	uint8_t   TCA9548A_Device;           /*!< Device number on TCA9548A I2C Multiplexer or 255 if TCA9548A not being used */
     uint8_t   TCA9548A_Address;          /*!< Address of TCA9548A I2C Multiplexer or 255 if TCA9548A not being used */
 
+	// calls the i2c write to multiplexer function
+	int (*i2c_multi_func)(uint8_t address, uint16_t reg);
+
+	// calls read_i2c_block_data(address, reg, length)
+	int (*i2c_read_func)(uint8_t address, uint16_t reg,
+						uint8_t *list, uint8_t length);
+
+	// calls write_i2c_block_data(address, reg, list)
+	int (*i2c_write_func)(uint8_t address, uint16_t reg,
+						uint8_t *list, uint8_t length);
+
 } VL53L1_Dev_t;
 
 typedef VL53L1_Dev_t *VL53L1_DEV;
