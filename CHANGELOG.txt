@@ -1,3 +1,18 @@
+0.0.7
+-----
+
+* Bugfix: Fix incompatible return type of initialise(), a build error on GCC 14+
+* Bugfix: Declare ctypes argument/return types, fixing segfaults from truncated device pointers on 64-bit systems, thanks to @Odinroast, for #60
+* Enhancement: Makefile now builds a working libvl53l1x.so, including the python_lib wrapper
+* Enhancement: Add examples/distance.c, a C equivalent of distance.py, replacing the empty test.c
+* Enhancement: Add python_lib/vl53l1x_python.h, declaring the wrapper API for C callers
+* Breaking: get_distance() returns -1 for a measurement the sensor rejected, rather than a stale or nonsense value such as -1185, for #26 and #55
+* Enhancement: Add get_status()/get_range_status()/get_range_status_string(), for #58
+* Enhancement: Move packaging metadata to pyproject.toml, with versions derived from git tags
+* Enhancement: Build and publish aarch64/armv7l wheels to PyPI on tag, via a trusted publisher
+* Enhancement: Document dependencies, building from source and use from C
+* Bugfix: Port examples/roi.py to Python 3, it was Python 2 only and would not parse
+
 0.0.6
 -----
 
