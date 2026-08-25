@@ -32,6 +32,7 @@ SOFTWARE.
 #include <time.h>
 #include "vl53l1_api.h"
 #include "vl53l1_platform.h"
+#include "vl53l1x_python.h"
 
 static VL53L1_RangingMeasurementData_t RangingMeasurementData;
 static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasurementData;
