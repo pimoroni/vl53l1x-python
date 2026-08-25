@@ -32,7 +32,12 @@ py-modules = ["VL53L1X"]
 # The version comes from the nearest git tag, so releasing is a matter of
 # tagging vX.Y.Z. Builds from a source tree with no git metadata (an unpacked
 # sdist, for instance) read the version recorded in PKG-INFO instead.
+#
+# A tree with neither, such as a zip downloaded from GitHub, has nothing to go
+# on, and without a fallback the build fails outright rather than installing.
 [tool.setuptools_scm]
+fallback_version = "0.0.0"
+
 
 [tool.cibuildwheel]
 # Alpine/musl isn't a target for a Raspberry Pi library.
