@@ -21,7 +21,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_int, c_uint, pointer, c_ubyte, c_uint8, c_uint32, c_uint16, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char_p, c_int, c_uint, create_string_buffer, pointer, c_ubyte, c_uint32, c_uint16, c_void_p
 from smbus2 import SMBus, i2c_msg
 import os
 import site
@@ -37,6 +37,26 @@ class VL53L1xDistanceMode:
     SHORT = 1
     MEDIUM = 2
     LONG = 3
+
+
+class VL53L1xRangeStatus:
+    """Why the sensor did or didn't trust its last measurement."""
+    RANGE_VALID = 0
+    SIGMA_FAIL = 1
+    SIGNAL_FAIL = 2
+    RANGE_VALID_MIN_RANGE_CLIPPED = 3
+    OUTOFBOUNDS_FAIL = 4
+    HARDWARE_FAIL = 5
+    RANGE_VALID_NO_WRAP_CHECK_FAIL = 6
+    WRAP_TARGET_FAIL = 7
+    PROCESSING_FAIL = 8
+    XTALK_SIGNAL_FAIL = 9
+    SYNCRONISATION_INT = 10
+    RANGE_VALID_MERGED_PULSE = 11
+    TARGET_PRESENT_LACK_OF_SIGNAL = 12
+    MIN_RANGE_FAIL = 13
+    RANGE_INVALID = 14
+    NONE = 255
 
 
 class VL53L1xUserRoi:
@@ -112,6 +132,18 @@ _TOF_LIBRARY.setDeviceAddress.restype = c_int
 # needs the same treatment or the handle is truncated on the way through.
 _TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds.argtypes = [c_void_p, POINTER(c_uint32)]
 _TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds.restype = c_int
+
+_TOF_LIBRARY.getStatus.argtypes = []
+_TOF_LIBRARY.getStatus.restype = c_int
+
+_TOF_LIBRARY.getRangeStatus.argtypes = []
+_TOF_LIBRARY.getRangeStatus.restype = c_ubyte
+
+_TOF_LIBRARY.VL53L1_GetRangeStatusString.argtypes = [c_ubyte, c_char_p]
+_TOF_LIBRARY.VL53L1_GetRangeStatusString.restype = c_int
+
+# VL53L1_MAX_STRING_LENGTH, from api/platform/vl53l1_platform_user_config.h.
+_MAX_STRING_LENGTH = 512
 
 
 class VL53L1X:
@@ -228,8 +260,37 @@ class VL53L1X:
         _TOF_LIBRARY.stopRanging(self._device())
 
     def get_distance(self):
-        """Get distance from VL53L1X ToF Sensor"""
+        """Get distance from VL53L1X ToF Sensor
+
+        A measurement the sensor rejected still returns a number, so check
+        get_range_status() before trusting a reading that looks wrong.
+
+        """
         return _TOF_LIBRARY.getDistance(self._device())
+
+    def get_status(self):
+        """Get the API status of the last get_distance(), 0 for success."""
+        return _TOF_LIBRARY.getStatus()
+
+    def get_range_status(self):
+        """Get the sensor's verdict on the last get_distance().
+
+        One of the VL53L1xRangeStatus values. RANGE_VALID means the
+        distance is good; any other value is the reason to doubt it.
+
+        """
+        return _TOF_LIBRARY.getRangeStatus()
+
+    def get_range_status_string(self):
+        """Get the range status of the last get_distance(), as text.
+
+        The ST API only names codes 0 to 5 and calls every other value
+        "No Update", so get_range_status() is the authoritative answer.
+
+        """
+        buffer = create_string_buffer(_MAX_STRING_LENGTH)
+        _TOF_LIBRARY.VL53L1_GetRangeStatusString(self.get_range_status(), buffer)
+        return buffer.value.decode("utf-8")
 
     def set_timing(self, timing_budget, inter_measurement_period):
         """Set the timing budget and inter measurement period.
