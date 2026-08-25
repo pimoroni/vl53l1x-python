@@ -1,0 +1,90 @@
+name: Build and release
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  sdist:
+    name: Build sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # setuptools-scm derives the version from tags, which a shallow
+          # clone does not fetch.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  wheels:
+    name: Build ${{ matrix.arch }} wheels
+    needs: [sdist]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+          - arch: armv7l
+            runner: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist-sdist
+          path: dist
+
+      # aarch64 builds run native on ARM runners; armv7l has no runner and is
+      # emulated, which makes it substantially slower.
+      - if: matrix.arch == 'armv7l'
+        uses: docker/setup-qemu-action@v4
+
+      # Building from the sdist rather than the checkout proves the sdist is
+      # self-contained, and avoids setuptools-scm needing git inside the
+      # manylinux container.
+      - id: sdist
+        run: echo "path=$(ls dist/*.tar.gz)" >> "$GITHUB_OUTPUT"
+
+      - uses: pypa/cibuildwheel@v4.2.0
+        with:
+          package-dir: ${{ steps.sdist.outputs.path }}
+        env:
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.arch }}
+          path: wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: [sdist, wheels]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # Requires a PyPI trusted publisher for pimoroni/vl53l1x-python, workflow
+    # release.yml, environment pypi. No API token is stored anywhere.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vl53l1x
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          merge-multiple: true
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.14.2

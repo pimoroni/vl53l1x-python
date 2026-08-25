@@ -32,9 +32,16 @@ SOFTWARE.
 #include <time.h>
 #include "vl53l1_api.h"
 #include "vl53l1_platform.h"
+#include "vl53l1x_python.h"
 
 static VL53L1_RangingMeasurementData_t RangingMeasurementData;
 static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasurementData;
+
+/* How the most recent getDistance() fared. Like the measurement data they
+ * accompany, these describe whichever device was read last rather than being
+ * held per-device. */
+static VL53L1_Error LastStatus = VL53L1_ERROR_NONE;
+static uint8_t LastRangeStatus = VL53L1_RANGESTATUS_NONE;
 
 /******************************************************************************
  * @brief   Initialises the device.
@@ -45,17 +52,9 @@ static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasur
  *              being used. If not being used, set to 0.
  * @retval  The Dev Object to pass to other library functions.
  *****************************************************************************/
-VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
+VL53L1_DEV initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
-    uint32_t refSpadCount;
-    uint8_t isApertureSpads;
-    uint8_t VhvSettings;
-    uint8_t PhaseCal;
-    VL53L1_Version_t                   Version;
-    VL53L1_Version_t                  *pVersion   = &Version;
-    VL53L1_DeviceInfo_t                DeviceInfo;
-    int32_t status_int;
     uint8_t ModelId, ModuleType, MaskRev;
 
 
@@ -105,6 +104,7 @@ VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA
     Status = VL53L1_StaticInit(dev);
     //if(Status == VL53L1_ERROR_NONE){
 #ifdef DEBUG
+        VL53L1_DeviceInfo_t DeviceInfo;
         Status = VL53L1_GetDeviceInfo(dev, &DeviceInfo);
         if(Status == VL53L1_ERROR_NONE){
             printf("VL53L0X_GetDeviceInfo:\n");
@@ -205,18 +205,60 @@ VL53L1_Error setInterMeasurementPeriodMilliSeconds(VL53L1_Dev_t *dev, int period
 }
 
 /******************************************************************************
+ * @brief   Whether a range status describes a reading worth having
+ *
+ * The four VL53L1_RANGESTATUS_RANGE_VALID* codes each describe a usable
+ * measurement, with or without a caveat. Under any other code RangeMilliMeter
+ * holds whatever the last attempt left behind, which is not a distance.
+ *****************************************************************************/
+static int rangeIsValid(uint8_t range_status)
+{
+    return range_status == VL53L1_RANGESTATUS_RANGE_VALID
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_MIN_RANGE_CLIPPED
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_NO_WRAP_CHECK_FAIL
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_MERGED_PULSE;
+}
+
+/******************************************************************************
  * @brief   Get current distance in mm
- * @return  Current distance in mm or -1 on error
+ * @return  Current distance in mm, or -1 if the measurement failed.
+ *              getStatus() and getRangeStatus() say why.
  *****************************************************************************/
 int32_t getDistance(VL53L1_Dev_t *dev)
 {
-    VL53L1_Error Status = VL53L1_ERROR_NONE;
+    VL53L1_Error wait_status = VL53L1_ERROR_NONE;
+    VL53L1_Error read_status = VL53L1_ERROR_NONE;
     int32_t current_distance = -1;
-    Status = VL53L1_WaitMeasurementDataReady(dev);
-    Status = VL53L1_GetRangingMeasurementData(dev, pRangingMeasurementData);
-    current_distance = pRangingMeasurementData->RangeMilliMeter;
+
+    wait_status = VL53L1_WaitMeasurementDataReady(dev);
+    read_status = VL53L1_GetRangingMeasurementData(dev, pRangingMeasurementData);
+    LastStatus = wait_status == VL53L1_ERROR_NONE ? read_status : wait_status;
+    LastRangeStatus = pRangingMeasurementData->RangeStatus;
+
+    if (LastStatus == VL53L1_ERROR_NONE && rangeIsValid(LastRangeStatus)) {
+        current_distance = pRangingMeasurementData->RangeMilliMeter;
+    }
+
     VL53L1_ClearInterruptAndStartMeasurement(dev);
     return current_distance;
+}
+
+/******************************************************************************
+ * @brief   How the API fared during the last getDistance()
+ * @retval  Error code, 0 for success.
+ *****************************************************************************/
+VL53L1_Error getStatus(void)
+{
+    return LastStatus;
+}
+
+/******************************************************************************
+ * @brief   What the sensor made of the last measurement
+ * @retval  One of the VL53L1_RANGESTATUS_* values, 0 for a valid range.
+ *****************************************************************************/
+uint8_t getRangeStatus(void)
+{
+    return LastRangeStatus;
 }
 
 /******************************************************************************

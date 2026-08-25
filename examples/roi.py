@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import sys, signal
-sys.path.insert(0, "build/lib.linux-armv7l-2.7/")
+import sys
+import signal
 
 import VL53L1X
 import time
-from datetime import datetime
 
 tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
 print("Python: Initialized")
@@ -26,34 +25,36 @@ print("Python: Opened")
 # 0__________15
 #
 
+
 def scan(type="w"):
     if type == "w":
         # Wide scan forward ~30deg angle
-        print "Scan: wide"
+        print("Scan: wide")
         return VL53L1X.VL53L1xUserRoi(0, 15, 15, 0)
     elif type == "c":
         # Focused scan forward
-        print "Scan: center"
+        print("Scan: center")
         return VL53L1X.VL53L1xUserRoi(6, 9, 9, 6)
     elif type == "t":
         # Focused scan top
-        print "Scan: top"
+        print("Scan: top")
         return VL53L1X.VL53L1xUserRoi(6, 15, 9, 12)
     elif type == "b":
         # Focused scan bottom
-        print "Scan: bottom"
+        print("Scan: bottom")
         return VL53L1X.VL53L1xUserRoi(6, 3, 9, 0)
     elif type == "l":
         # Focused scan left
-        print "Scan: left"
+        print("Scan: left")
         return VL53L1X.VL53L1xUserRoi(0, 9, 3, 6)
     elif type == "r":
         # Focused scan right
-        print "Scan: right"
+        print("Scan: right")
         return VL53L1X.VL53L1xUserRoi(12, 9, 15, 6)
     else:
         print("Scan: wide (default)")
         return VL53L1X.VL53L1xUserRoi(0, 15, 15, 0)
+
 
 if len(sys.argv) == 2:
     roi = scan(sys.argv[1])
@@ -64,10 +65,12 @@ tof.set_user_roi(roi)
 
 tof.start_ranging(1)
 
+
 def exit_handler(signal, frame):
     tof.stop_ranging()
     tof.close()
     sys.exit(0)
+
 
 signal.signal(signal.SIGINT, exit_handler)
 
