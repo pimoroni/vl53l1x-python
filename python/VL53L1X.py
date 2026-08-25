@@ -108,6 +108,11 @@ _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds.restype = c_int
 _TOF_LIBRARY.setDeviceAddress.argtypes = [c_void_p, c_int]
 _TOF_LIBRARY.setDeviceAddress.restype = c_int
 
+# get_timing() reaches past the wrapper into the ST API, so that entry point
+# needs the same treatment or the handle is truncated on the way through.
+_TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds.argtypes = [c_void_p, POINTER(c_uint32)]
+_TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds.restype = c_int
+
 
 class VL53L1X:
     """VL53L1X ToF."""
@@ -144,6 +149,12 @@ class VL53L1X:
     def close(self):
         self._i2c.close()
         self._dev = None
+
+    def _device(self):
+        """Return the device handle, or raise if the sensor isn't open."""
+        if self._dev is None:
+            raise VL53L1xError("Sensor is not open, call open() first.")
+        return self._dev
 
     def _configure_i2c_library_functions(self):
         # I2C bus read callback for low level library.
@@ -194,7 +205,7 @@ class VL53L1X:
     # Default ROI is 16x16 (indices 0-15). The minimum ROI size is 4x4.
     def set_user_roi(self, user_roi):
         """Set Region Of Interest (ROI)"""
-        _TOF_LIBRARY.setUserRoi(self._dev,
+        _TOF_LIBRARY.setUserRoi(self._device(),
                                 user_roi.top_left_x,
                                 user_roi.top_left_y,
                                 user_roi.bot_right_x,
@@ -202,7 +213,7 @@ class VL53L1X:
 
     def start_ranging(self, mode=VL53L1xDistanceMode.LONG):
         """Start VL53L1X ToF Sensor Ranging"""
-        _TOF_LIBRARY.startRanging(self._dev, mode)
+        _TOF_LIBRARY.startRanging(self._device(), mode)
 
     def set_distance_mode(self, mode):
         """Set distance mode
@@ -210,15 +221,15 @@ class VL53L1X:
         :param mode: One of 1 = Short, 2 = Medium or 3 = Long
 
         """
-        _TOF_LIBRARY.setDistanceMode(self._dev, mode)
+        _TOF_LIBRARY.setDistanceMode(self._device(), mode)
 
     def stop_ranging(self):
         """Stop VL53L1X ToF Sensor Ranging"""
-        _TOF_LIBRARY.stopRanging(self._dev)
+        _TOF_LIBRARY.stopRanging(self._device())
 
     def get_distance(self):
         """Get distance from VL53L1X ToF Sensor"""
-        return _TOF_LIBRARY.getDistance(self._dev)
+        return _TOF_LIBRARY.getDistance(self._device())
 
     def set_timing(self, timing_budget, inter_measurement_period):
         """Set the timing budget and inter measurement period.
@@ -241,25 +252,25 @@ class VL53L1X:
 
     def set_timing_budget(self, timing_budget):
         """Set the timing budget in microseocnds"""
-        _TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds(self._dev, timing_budget)
+        _TOF_LIBRARY.setMeasurementTimingBudgetMicroSeconds(self._device(), timing_budget)
 
     def set_inter_measurement_period(self, period):
         """Set the inter-measurement period in milliseconds"""
-        _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds(self._dev, period)
+        _TOF_LIBRARY.setInterMeasurementPeriodMilliSeconds(self._device(), period)
 
     # This function included to show how to access the ST library directly
     # from python instead of through the simplified interface
     def get_timing(self):
         budget = c_uint(0)
         budget_p = pointer(budget)
-        status = _TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds(self._dev, budget_p)
+        status = _TOF_LIBRARY.VL53L1_GetMeasurementTimingBudgetMicroSeconds(self._device(), budget_p)
         if status == 0:
             return budget.value + 1000
         else:
             return 0
 
     def change_address(self, new_address):
-        status = _TOF_LIBRARY.setDeviceAddress(self._dev, new_address)
+        status = _TOF_LIBRARY.setDeviceAddress(self._device(), new_address)
         if status == 0:
             self.i2c_address = new_address
         else:
