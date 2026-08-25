@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vl53l1x"
+description = "VL53L1X distance sensor driver for Raspberry Pi"
+readme = "README.md"
+requires-python = ">=3.8"
+maintainers = [{name = "Phil Howard", email = "phil@pimoroni.com"}]
+dependencies = ["smbus2"]
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Hardware",
+]
+
+[project.urls]
+Homepage = "https://github.com/pimoroni/vl53l1x-python"
+Source = "https://github.com/pimoroni/vl53l1x-python"
+Changelog = "https://github.com/pimoroni/vl53l1x-python/blob/master/CHANGELOG.txt"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+py-modules = ["VL53L1X"]
+
+# The version comes from the nearest git tag, so releasing is a matter of
+# tagging vX.Y.Z. Builds from a source tree with no git metadata (an unpacked
+# sdist, for instance) read the version recorded in PKG-INFO instead.
+[tool.setuptools_scm]
+
+[tool.cibuildwheel]
+# Alpine/musl isn't a target for a Raspberry Pi library.
+skip = "*-musllinux_*"
+# Importing the module loads the compiled .so through ctypes and resolves every
+# symbol it binds, so this catches missing sources or a mis-named artifact
+# without needing a sensor attached.
+test-requires = "smbus2"
+test-command = "python -c \"import VL53L1X; print(VL53L1X.__file__)\""
