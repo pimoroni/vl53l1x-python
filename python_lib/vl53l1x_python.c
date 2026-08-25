@@ -45,7 +45,7 @@ static VL53L1_RangingMeasurementData_t *pRangingMeasurementData = &RangingMeasur
  *              being used. If not being used, set to 0.
  * @retval  The Dev Object to pass to other library functions.
  *****************************************************************************/
-VL53L1_DEV *initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
+VL53L1_DEV initialise(uint8_t i2c_address, uint8_t TCA9548A_Device, uint8_t TCA9548A_Address, uint8_t perform_reset)
 {
     VL53L1_Error Status = VL53L1_ERROR_NONE;
     uint32_t refSpadCount;
