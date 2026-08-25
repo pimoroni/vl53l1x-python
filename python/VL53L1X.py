@@ -262,8 +262,8 @@ class VL53L1X:
     def get_distance(self):
         """Get distance from VL53L1X ToF Sensor
 
-        A measurement the sensor rejected still returns a number, so check
-        get_range_status() before trusting a reading that looks wrong.
+        Returns the distance in mm, or -1 where the sensor rejected the
+        measurement. get_range_status_string() then says why.
 
         """
         return _TOF_LIBRARY.getDistance(self._device())

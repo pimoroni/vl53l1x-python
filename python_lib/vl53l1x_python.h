@@ -67,9 +67,9 @@ VL53L1_Error setMeasurementTimingBudgetMicroSeconds(VL53L1_DEV dev, int timing_b
 VL53L1_Error setInterMeasurementPeriodMilliSeconds(VL53L1_DEV dev, int period);
 
 /*
- * Blocks until a reading is ready, then returns the distance in mm. The
- * reading means nothing unless getStatus() and getRangeStatus() agree it
- * succeeded, so a failed measurement still reports a number.
+ * Blocks until a reading is ready, then returns the distance in mm, or -1 if
+ * the sensor rejected the measurement. getStatus() and getRangeStatus() say
+ * which of the two went wrong.
  */
 int32_t getDistance(VL53L1_DEV dev);
 

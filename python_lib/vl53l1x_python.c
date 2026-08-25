@@ -205,9 +205,24 @@ VL53L1_Error setInterMeasurementPeriodMilliSeconds(VL53L1_Dev_t *dev, int period
 }
 
 /******************************************************************************
+ * @brief   Whether a range status describes a reading worth having
+ *
+ * The four VL53L1_RANGESTATUS_RANGE_VALID* codes each describe a usable
+ * measurement, with or without a caveat. Under any other code RangeMilliMeter
+ * holds whatever the last attempt left behind, which is not a distance.
+ *****************************************************************************/
+static int rangeIsValid(uint8_t range_status)
+{
+    return range_status == VL53L1_RANGESTATUS_RANGE_VALID
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_MIN_RANGE_CLIPPED
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_NO_WRAP_CHECK_FAIL
+        || range_status == VL53L1_RANGESTATUS_RANGE_VALID_MERGED_PULSE;
+}
+
+/******************************************************************************
  * @brief   Get current distance in mm
- * @return  Current distance in mm, meaningful only when getStatus() and
- *              getRangeStatus() both report success
+ * @return  Current distance in mm, or -1 if the measurement failed.
+ *              getStatus() and getRangeStatus() say why.
  *****************************************************************************/
 int32_t getDistance(VL53L1_Dev_t *dev)
 {
@@ -220,7 +235,9 @@ int32_t getDistance(VL53L1_Dev_t *dev)
     LastStatus = wait_status == VL53L1_ERROR_NONE ? read_status : wait_status;
     LastRangeStatus = pRangingMeasurementData->RangeStatus;
 
-    current_distance = pRangingMeasurementData->RangeMilliMeter;
+    if (LastStatus == VL53L1_ERROR_NONE && rangeIsValid(LastRangeStatus)) {
+        current_distance = pRangingMeasurementData->RangeMilliMeter;
+    }
 
     VL53L1_ClearInterruptAndStartMeasurement(dev);
     return current_distance;

@@ -61,7 +61,8 @@ tof.start_ranging(1)  # Start ranging
                       # 3 = Long Range
 
 # Grab the range in mm, this function will block until
-# a reading is returned.
+# a reading is returned. A rejected measurement gives -1,
+# and tof.get_range_status_string() says why.
 distance_in_mm = tof.get_distance()
 
 tof.stop_ranging()
